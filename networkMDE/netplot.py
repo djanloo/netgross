@@ -159,8 +159,13 @@ def plot_net(net, labels=None):
         print("\tDone.")
 
     if labels is not None:
-        for node in net:
-            ax.annotate(labels[node.n], tuple(node.position), size=11)
+        if ax.name == '3d':
+            for node in net:
+                # ax.text(x, y, z, label, zdir)
+                ax.text(*node.position, labels[node.n], None,  size=11)
+        else:
+            for node in net:
+                ax.annotate(labels[node.n], tuple(node.position), size=11)
 
 
 def plot_links(net):
