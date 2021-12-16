@@ -20,7 +20,8 @@ jobs:
           # - runs the test with pytest-cov 
           command: |
             pytest --cov-report xml --cov="$(pip show networkMDE | grep Location | awk '{print $2}')/networkMDE" tests/
-      - codecov/upload
+      - codecov/upload:
+          token: 8e0322bb-9262-4b01-a59b-6b0d97670990
 
 
 workflows:
