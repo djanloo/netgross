@@ -51,16 +51,17 @@ class dummySuperNet(network.uniNetwork):
 class netPlotStaticTest(unittest.TestCase):
     def setUp(self):
         self.net = network.uniNetwork.Random(10, 1.0)
+        self.labels = [f"{_.n}" for _ in self.net]
 
     def test_2D_static_plot(self):
         self.net.initialize_embedding(dim=2)
         self.net.cMDE(step=0.1, neg_step=0.1, Nsteps=1000)
-        netplot.plot_net(self.net)
+        netplot.plot_net(self.net, labels=self.labels)
 
     def test_3D_static_plot(self):
         self.net.initialize_embedding(dim=3)
         self.net.cMDE(step=0.1, neg_step=0.1, Nsteps=1000)
-        netplot.plot_net(self.net)
+        netplot.plot_net(self.net, labels=self.labels)
 
 
 class netPlotDynamicTest(unittest.TestCase):
