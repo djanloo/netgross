@@ -14,8 +14,8 @@ jobs:
           name: Installing requirements and test modules
           command: pip install pytest-cov -r requirements.txt
       - run: 
-        name: Installing module
-        command: pip install .
+          name: Installing module
+          command: pip install .
       # - run: pytest tests
       - run:
           name: Code Coverage
