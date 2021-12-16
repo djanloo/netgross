@@ -159,10 +159,10 @@ def plot_net(net, labels=None):
         print("\tDone.")
 
     if labels is not None:
-        if ax.name == '3d':
+        if ax.name == "3d":
             for node in net:
                 # ax.text(x, y, z, label, zdir)
-                ax.text(*node.position, labels[node.n], None,  size=11)
+                ax.text(*node.position, labels[node.n], None, size=11)
         else:
             for node in net:
                 ax.annotate(labels[node.n], tuple(node.position), size=11)

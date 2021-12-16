@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   python: circleci/python@1.2
+  codecov: codecov/codecov@3.0.0
 
 jobs:
   build_and_test:
@@ -11,7 +12,31 @@ jobs:
       - checkout
       - run: pip install pytest -r requirements.txt
       - run: python setup.py install
-      - run: pytest tests
+      # - run: pytest tests
+      - run:
+          name: Code Coverage
+          # Explaination:
+          # - finds where the repo is installed
+          # - runs the test with pytest-cov 
+          command: |
+            pytest --cov-report xml --cov="$(pip show networkMDE | grep Location | awk '{print $2}')/networkMDE" tests/
+      - codecov/upload
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.9.6
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install .[test]
+      - run:
+          name: Run tests and collect coverage
+          command: |
+            coverage run tests.py
+            coverage xml
+      - codecov/upload
 
 workflows:
   build_and_test:
