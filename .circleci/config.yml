@@ -22,21 +22,6 @@ jobs:
             pytest --cov-report xml --cov="$(pip show networkMDE | grep Location | awk '{print $2}')/networkMDE" tests/
       - codecov/upload
 
-jobs:
-  build:
-    docker:
-      - image: cimg/python:3.9.6
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: pip install .[test]
-      - run:
-          name: Run tests and collect coverage
-          command: |
-            coverage run tests.py
-            coverage xml
-      - codecov/upload
 
 workflows:
   build_and_test:
