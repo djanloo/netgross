@@ -23,3 +23,10 @@ The conceptual points of greater interest for me are:
 ![apple_game](assets/random_2d_2.gif) 
 
 ![apple_fixed_distances](assets/random_big.gif)
+
+## Installation
+Install running
+```
+pip install .
+```
+in the same directory of ``setup.py``
