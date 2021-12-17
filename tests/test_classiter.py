@@ -81,6 +81,59 @@ class citerTest(unittest.TestCase):
             self.cdict.attribute == self.clist_of_list_set,
             f"cdict attribute should be {self.clist_of_list_set} not {self.cdict.attribute}",
         )
+    
+
+    def test_iter_and_getitem(self):
+        list_ = [dummyClass(_) for _ in self.list_of_attributes]
+        set_ = {dummyClass(_) for _ in self.list_of_attributes}
+        dict_ = {_: dummyClass(_) for _ in self.list_of_attributes}
+
+        self.clist = clist(list_)
+        self.cset = cset(set_)
+        self.cdict = cdict(dict_)
+
+        msg = "and generating object have different element"
+
+        for i in range(len(self.clist)):
+            self.assertEqual(self.clist[i], list_[i],
+                            "clist" + msg + f"({self.clist[i]} is not {list_[i]})")
+
+        for key in self.list_of_attributes:
+            self.assertEqual(self.cdict[key], dict_[key],
+                            "cdict" + msg + f"({self.cdict[key]} is not {dict_[key]})")
+
+        # since sets are not subscriptable but iterable
+        for el in self.cset:
+            a = el
+        
+        # double check for element iteration
+        for i,el in enumerate(self.clist):
+            self.assertEqual(el, list_[i],
+                            "clist" + msg + f"({el} is not {list_[i]})")
+
+        for key in self.list_of_attributes:
+            self.assertEqual(self.cdict[key], dict_[key],
+                            "cdict" + msg + f"({self.cdict[key]} is not {dict_[key]})")
+        
+
+    def test_setitem(self):
+        list_ = [dummyClass(_) for _ in self.list_of_attributes]
+        dict_ = {_: dummyClass(_) for _ in self.list_of_attributes}
+        self.clist = clist(list_)
+        self.cdict = cdict(dict_)
+        self.clist[0] = dummyClass(42)
+        self.cdict[0] = dummyClass(84)
+        self.assertEqual(self.clist[0].attribute, 42)
+        self.assertEqual(self.cdict[0].attribute, 84)
+
+    def test_list(self):
+        # This tests:
+        #   - iter part
+        #   - getitem
+        #   - list()
+        list_ = [dummyClass(_) for _ in self.list_of_attributes]
+        self.clist = clist(list_)
+        self.assertEqual(list(self.clist), list_)
 
     def test_method(self):
 
@@ -105,6 +158,14 @@ class citerTest(unittest.TestCase):
             clist([_ + 3 for _ in self.clist_of_list_set]),
             f"method calling: {self.cdict.method()} !=  {clist([_+3 for _ in self.clist_of_list_set])}",
         )
+
+    def test_str(self):
+        self.clist = clist([dummyClass(_) for _ in self.list_of_attributes])
+        self.cset = cset({dummyClass(_) for _ in self.list_of_attributes})
+        self.cdict = cdict({_: dummyClass(_) for _ in self.list_of_attributes})
+        a = str(self.clist)
+        a = str(self.cdict)
+        a = str(self.cset)
 
 
 if __name__ == "__main__":
