@@ -260,6 +260,8 @@ class uniNetwork:
     def to_scatter(self):
         return np.array(list(self.nodes.position)).transpose()
 
+    '''
+    # this function is useless
     def print_distanceM(self, target=False):
         M = self._targetM if target else self.distanceM
         title = "Target matrix" if target else "Current matrix "
@@ -271,6 +273,7 @@ class uniNetwork:
                 print(colored(f"{M[i,j]:.2}", color, attrs=attrs), end="\t")
             print()
         print()
+    '''
 
     def update_target_matrix(self):
         print("Pynet - updating targets")
