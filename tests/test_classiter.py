@@ -127,10 +127,6 @@ class citerTest(unittest.TestCase):
         self.assertEqual(self.cdict[0].attribute, 84)
 
     def test_list(self):
-        # This tests:
-        #   - iter part
-        #   - getitem
-        #   - list()
         list_ = [dummyClass(_) for _ in self.list_of_attributes]
         self.clist = clist(list_)
         self.assertEqual(list(self.clist), list_)

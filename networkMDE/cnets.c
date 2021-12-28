@@ -14,6 +14,9 @@ Network must be given in normalized mode:
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#define infoprint(...) printf("cnets - INFO: ");printf(__VA_ARGS__);fflush(stdout);
+#define errprint(...) fprintf(stderr, "cnets - ERROR: ");fprintf(stderr, __VA_ARGS__);fflush(stderr);
+
 typedef struct sparserow
 {
     unsigned int i;
@@ -56,43 +59,35 @@ int RAND_INIT = 0;
 void link_nodes(Node * node, unsigned int child_index, float distance){
 
     // Adds label of child to child array
-    // printf("cnets - link_nodes - realloc childs (old = %p)...", node -> childs); fflush(stdout);
     node -> childs = (unsigned int *) realloc(node -> childs, sizeof(unsigned int)*( (node -> childs_number) + 1));
     if (node -> childs == NULL)
     {
-        printf("!!! cannot allocate memory !!!\n");
+        infoprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
-    // printf("assign new child..."); fflush(stdout);
     (node -> childs)[node -> childs_number] = child_index;
-    // printf("Done.\n");
 
     // Adds distances to distances array
-    // printf("cnets - link_nodes - realloc distances..."); fflush(stdout);
     node -> distances = (float *) realloc(node -> distances, sizeof(float)*((*node).childs_number + 1));
     if (node -> distances == NULL)
     {
-        printf("!!! cannot allocate memory !!!\n");
+        infoprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
-    // printf("assign new distance..."); fflush(stdout);
     (node -> distances)[node -> childs_number] = distance;
-    // printf("Done.\n");
 
     node -> childs_number = (node -> childs_number) + 1;
     return ;
 }
 
 Graph to_Net(SparseRow * SM, float * values, unsigned int N_elements, unsigned long N_links){
-    // printf("cnets - to_Net - ALLOC\n");
     Graph g;
     g.nodes = (Node *) malloc(sizeof(Node)*N_elements);
     if (g.nodes == NULL)
     {
-        printf("!!! cannot allocate memory for %d nodes !!!\n", N_elements);
+        errprint("!!! cannot allocate memory for %d nodes !!!\n", N_elements);
         exit(-1);
     }
-    // printf("cnets - to_Net - ASSIGN\n");
     // Values assignment
     for (unsigned int k = 0; k < N_elements; k++)
     {
@@ -103,45 +98,15 @@ Graph to_Net(SparseRow * SM, float * values, unsigned int N_elements, unsigned l
         g.nodes[k].distances = (float *) malloc(sizeof(float));
     }
 
-    // printf("cnets - to_Net - LINK\n");
     // Linking
     for (unsigned long k = 0; k < N_links; k++)
     {
         link_nodes(&(g.nodes[SM[k].i]), SM[k].j, SM[k].d);
         link_nodes(&(g.nodes[SM[k].j]), SM[k].i, SM[k].d);
     }
-    // printf("cnets - to_Net - NEl&NLi\n");
     g.N_nodes = N_elements;
     g.N_links = N_links;
     return g;
-}
-
-float * PyList_to_double(PyObject * Pylist, unsigned int N_elements){
-
-    float * dlist = (float *) malloc(sizeof(float)*N_elements);
-    for (unsigned int i = 0; i < N_elements; i++)
-    {
-        dlist[i] = (float) PyFloat_AS_DOUBLE(PyList_GetItem(Pylist, i));
-    }
-    return dlist;
-}
-
-SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links){
-
-    SparseRow * SM = (SparseRow *) malloc(sizeof(SparseRow)*N_links);
-    for (unsigned long k = 0; k < N_links;k++)
-    {
-        PyObject * row = PyList_GetItem(list,k);
-        if (!PyList_Check(row))
-        {
-            printf("Invalid sparse list (row %li)\n", k);
-            return NULL;
-    }
-    SM[k].i = (unsigned int) PyLong_AsLong(PyList_GetItem(row,0));
-    SM[k].j = (unsigned int) PyLong_AsLong(PyList_GetItem(row,1));
-    SM[k].d = (unsigned int) PyFloat_AsDouble(PyList_GetItem(row,2));
-    }
-    return SM;
 }
 
 unsigned int child_local_index_by_child_name(unsigned int node_number, unsigned int child_name)
@@ -190,7 +155,7 @@ PyObject * init_network(PyObject * self, PyObject * args){
     float * values = NULL;
 
     // Take the args and divide them in two pyobjects
-    printf("cnets - Parsing...");fflush(stdout);
+    infoprint("Parsing...");
     if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim)) Py_RETURN_NONE;
     printf("\tDone.\n");
 
@@ -198,17 +163,17 @@ PyObject * init_network(PyObject * self, PyObject * args){
     unsigned long N_links = (unsigned long) PyList_Size(Psparse);
     if (N_links < 1 ||  N_elements < 2)
     {
-        printf("cnets - invalid network G = (%d, %ld)\n", N_elements, N_links);
+        errprint("invalid network G = (%d, %ld)\n", N_elements, N_links);
         exit(2);
     }
 
     // Convert each element of the lists into a valid element of the C-object
-    printf("cnets - Converting Py -> C..");fflush(stdout);
+    infoprint("Converting Py -> C..");
     SM = PyList_to_SM(Psparse, N_links);
     values = PyList_to_double(Pvalues, N_elements);
     printf("\tDone.\n");
 
-    printf("cnets - Generating network...");fflush(stdout);
+    infoprint("Generating network...");
     G = to_Net(SM, values, N_elements, N_links);
     free(SM);
     free(values);
@@ -216,20 +181,10 @@ PyObject * init_network(PyObject * self, PyObject * args){
     printf("\tDone.\n");
 
     // Initializes the position randomly
-    printf("cnets - Random initialization in R%d...", G.embedding_dimension); fflush(stdout);
+    infoprint("Random initialization in R%d...", G.embedding_dimension);
     random_init();
     printf("\tDone.\n");
     Py_RETURN_NONE;
-}
-
-float euclidean_distance(float * pos1, float * pos2, unsigned int dim){
-
-    float dist = 0.;
-    for (unsigned int i = 0; i < dim; i++)
-    {
-        dist += pow(pos1[i] - pos2[i], 2);
-    }
-    return sqrt(dist);
 }
 
 void move_away_from_random_not_child(unsigned int node, float eps){
@@ -262,10 +217,10 @@ PyObject * MDE(PyObject * self, PyObject * args){
 
     if (!PyArg_ParseTuple(args, "ffi", &eps, &neg_eps, &number_of_steps))
     {
-        printf("cnets - ERROR parsing MDE args\n");
+        errprint("parsing MDE args\n");
         Py_RETURN_NONE;
     }
-    printf("cnets - starting MDE with eps = %lf, neg_eps = %lf, Nsteps = %d\n",eps, neg_eps, number_of_steps);
+    infoprint("starting MDE with eps = %lf, neg_eps = %lf, Nsteps = %d\n",eps, neg_eps, number_of_steps);
 
     float actual_distance = 0., factor;
     unsigned int child_index;
@@ -293,18 +248,24 @@ PyObject * MDE(PyObject * self, PyObject * args){
             }
         }
     }
-    printf("\ncnets - MDE end\n");
+    printf("\n");
+    infoprint("MDE end\n");
+    progress_bar_status = 0;
     Py_RETURN_NONE;
 }
 
 PyObject * get_positions(PyObject * self, PyObject * args){
-    printf("cnets - Passing position back to python..."); fflush(stdout);
+    infoprint("Passing position back to python...");
     PyObject * list = PyList_New(G.N_nodes);
     for (unsigned int n = 0; n < G.N_nodes; n++)
     {
         PyObject * single = PyList_New(G.embedding_dimension);
         for (unsigned int d = 0; d < G.embedding_dimension; d++)
         {
+            if (G.nodes[n].position[d] != G.nodes[n].position[d])
+            {
+                errprint("NAN detected\n");
+            }
             PyList_SetItem(single, d, PyFloat_FromDouble(G.nodes[n].position[d]));
         }
         PyList_SetItem(list, n, single);
@@ -363,7 +324,7 @@ PyObject * matrix_to_list_of_list(float **mat, unsigned int N)
 
 PyObject * get_distanceM(PyObject * self, PyObject * args)
 {
-    printf("cnets - getting distances...");fflush(stdout);
+    infoprint("getting distances...");
     /* Returns a matrix of distances as list of lists.
         Waiting to implement numpy arrays. */
     float ** distanceM = (float**) malloc(sizeof(float*)*G.N_nodes);
@@ -397,7 +358,7 @@ PyObject * set_target(PyObject * self, PyObject * args)
 
     if(! PyArg_ParseTuple(args, "O", &PySM))
     {
-        printf("cnets - set_target: paring failed\n");
+        errprint("set_target: paring failed\n");
     }
     SparseRow * SM = PyList_to_SM(PySM, G.N_links);
     for (unsigned long link = 0; link < G.N_links; link++)
@@ -417,7 +378,7 @@ PyObject * set_seed(PyObject * self, PyObject * args)
 {
     int seed;
     if (!PyArg_ParseTuple(args, "i", &seed)){
-        printf("cnets - parsing failed in set_seed()\n");
+        errprint("parsing failed in set_seed()\n");
     }
     RAND_INIT = seed;
     Py_RETURN_NONE;
