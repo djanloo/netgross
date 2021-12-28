@@ -139,7 +139,6 @@ class uniNetwork:
         # self.initialize_embedding(dim=2)
 
     def initialize_embedding(self, dim=2):
-        print(self.targetSM)
         cnets.init_network(self.targetSM, list(self.nodes.value), dim)
         for node, position in zip(self, cnets.get_positions()):
             node.position = np.array(position, dtype=np.float32)

@@ -159,8 +159,6 @@ PyObject * init_network(PyObject * self, PyObject * args){
     if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim)) Py_RETURN_NONE;
     printf("\tDone.\n");
 
-    PyObject * test = PyList_GetItem(Psparse, 1);
-    printf("TEST first link %d, %d, %lf \n", PyList_GetItem(test,0), PyList_GetItem(test,1), PyList_GetItem(test,2));
     unsigned int N_elements = (unsigned int) PyList_Size(Pvalues);
     unsigned long N_links = (unsigned long) PyList_Size(Psparse);
     if (N_links < 1 ||  N_elements < 2)
@@ -236,10 +234,6 @@ PyObject * MDE(PyObject * self, PyObject * args){
                 child_index = G.nodes[current_node].childs[current_child];
                 actual_distance = euclidean_distance(G.nodes[current_node].position, G.nodes[child_index].position, G.embedding_dimension);                
                 factor = eps*(1.- G.nodes[current_node].distances[current_child]/actual_distance)/G.nodes[current_node].childs_number;
-                
-                printf("iter: %d \tActual distance: %lf\n",current_child, actual_distance);
-                printf("iter: %d \tTarget distance: %lf\n",current_child, G.nodes[current_node].distances[current_child]);
-                printf("iter: %d \tFactor",current_child, factor);
 
                 for (unsigned int d = 0; d < G.embedding_dimension; d++)
                 {

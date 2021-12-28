@@ -60,7 +60,7 @@ SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links){
     }
     SM[k].i = (unsigned int) PyLong_AsLong(PyList_GetItem(row,0));
     SM[k].j = (unsigned int) PyLong_AsLong(PyList_GetItem(row,1));
-    SM[k].d = (unsigned int) PyFloat_AsDouble(PyList_GetItem(row,2));
+    SM[k].d = PyFloat_AsDouble(PyList_GetItem(row,2));
     }
     return SM;
 }
