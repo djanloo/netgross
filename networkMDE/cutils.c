@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -82,6 +83,16 @@ float euclidean_distance(float * pos1, float * pos2, unsigned int dim){
         dist += pow(pos1[i] - pos2[i], 2);
     }
     return sqrt(dist);
+}
+
+bool isNan(float number){
+    if (number != number){
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

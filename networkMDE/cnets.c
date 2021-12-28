@@ -62,7 +62,7 @@ void link_nodes(Node * node, unsigned int child_index, float distance){
     node -> childs = (unsigned int *) realloc(node -> childs, sizeof(unsigned int)*( (node -> childs_number) + 1));
     if (node -> childs == NULL)
     {
-        infoprint("!!! cannot allocate memory !!!\n");
+        errprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
     (node -> childs)[node -> childs_number] = child_index;
@@ -71,7 +71,7 @@ void link_nodes(Node * node, unsigned int child_index, float distance){
     node -> distances = (float *) realloc(node -> distances, sizeof(float)*((*node).childs_number + 1));
     if (node -> distances == NULL)
     {
-        infoprint("!!! cannot allocate memory !!!\n");
+        errprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
     (node -> distances)[node -> childs_number] = distance;
@@ -159,6 +159,8 @@ PyObject * init_network(PyObject * self, PyObject * args){
     if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim)) Py_RETURN_NONE;
     printf("\tDone.\n");
 
+    PyObject * test = PyList_GetItem(Psparse, 1);
+    printf("TEST first link %d, %d, %lf \n", PyList_GetItem(test,0), PyList_GetItem(test,1), PyList_GetItem(test,2));
     unsigned int N_elements = (unsigned int) PyList_Size(Pvalues);
     unsigned long N_links = (unsigned long) PyList_Size(Psparse);
     if (N_links < 1 ||  N_elements < 2)
@@ -202,7 +204,7 @@ void move_away_from_random_not_child(unsigned int node, float eps){
     for (unsigned int d = 0; d < G.embedding_dimension; d++)
     {
         G.nodes[node].position[d] += eps/(dist*dist)*(G.nodes[node].position[d] - G.nodes[not_child].position[d]);
-        if (G.nodes[node].position[d] != G.nodes[node].position[d]){
+        if (isNan(G.nodes[node].position[d])){
             printf("NAN detected\n");
             printf("%d- %d --> %lf\n", node, not_child, dist);
             exit(5);
@@ -235,6 +237,10 @@ PyObject * MDE(PyObject * self, PyObject * args){
                 actual_distance = euclidean_distance(G.nodes[current_node].position, G.nodes[child_index].position, G.embedding_dimension);                
                 factor = eps*(1.- G.nodes[current_node].distances[current_child]/actual_distance)/G.nodes[current_node].childs_number;
                 
+                printf("iter: %d \tActual distance: %lf\n",current_child, actual_distance);
+                printf("iter: %d \tTarget distance: %lf\n",current_child, G.nodes[current_node].distances[current_child]);
+                printf("iter: %d \tFactor",current_child, factor);
+
                 for (unsigned int d = 0; d < G.embedding_dimension; d++)
                 {
                     G.nodes[current_node].position[d] += factor*(G.nodes[child_index].position[d] - G.nodes[current_node].position[d]) ;
@@ -262,9 +268,10 @@ PyObject * get_positions(PyObject * self, PyObject * args){
         PyObject * single = PyList_New(G.embedding_dimension);
         for (unsigned int d = 0; d < G.embedding_dimension; d++)
         {
-            if (G.nodes[n].position[d] != G.nodes[n].position[d])
+            if (isNan(G.nodes[n].position[d]))
             {
                 errprint("NAN detected\n");
+                exit(5);
             }
             PyList_SetItem(single, d, PyFloat_FromDouble(G.nodes[n].position[d]));
         }
