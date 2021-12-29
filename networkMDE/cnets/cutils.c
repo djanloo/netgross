@@ -16,7 +16,6 @@ typedef struct sparserow
     float d;
 } SparseRow;
 
-
 void progress_bar(float progress, int length)
 {     
     if ((int) (length*(progress - progress_bar_status)) > 1)
@@ -41,6 +40,7 @@ void progress_bar(float progress, int length)
             string[length] = '\0';
         }
         printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
+        printf(RESET_COLOR);
         fflush(stdout); 
         progress_bar_status = progress;
     }

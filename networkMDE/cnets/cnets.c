@@ -72,6 +72,11 @@ void link_nodes(Node * node, unsigned int child_index, float distance){
         errprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
+    if (distance < 0)
+    {
+        errprint("link(%d,%d) - Distance cannot be a negative number (%lf)\n",node->n, child_index, distance);
+        exit(2);
+    }
     (node -> distances)[node -> childs_number] = distance;
 
     node -> childs_number = (node -> childs_number) + 1;

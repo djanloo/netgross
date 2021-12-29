@@ -14,8 +14,8 @@
 #define BRED "\e[1;31m"
 #define RESET_COLOR "\e[0m"
 
-#define infoprint(...) printf(BLU "cnets - INFO: ");printf(__VA_ARGS__);printf(RESET_COLOR);fflush(stdout);
-#define errprint(...) fprintf(stderr, BRED "cnets - ERROR: ");fprintf(stderr, __VA_ARGS__);printf(RESET_COLOR);fflush(stderr);
+#define infoprint(...) printf("cnets - "BLU "INFO" RESET_COLOR ": ");printf(__VA_ARGS__);printf(RESET_COLOR);fflush(stdout);
+#define errprint(...) fprintf(stderr, "\ncnets - "BRED "ERROR" RESET_COLOR ": ");fprintf(stderr, __VA_ARGS__);printf(RESET_COLOR);fflush(stderr);
 
 typedef struct sparserow SparseRow;
 extern float progress_bar_status;
