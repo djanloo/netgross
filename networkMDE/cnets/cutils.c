@@ -22,24 +22,28 @@ void progress_bar(float progress, int length)
     {   
         int i = 0;
         char * string = (char *) malloc( sizeof(char) * (length+1));
-
+        printf(GRN"\33[2K\r");
         for (i = 0; i < length; i++)
         {
             if (i == 0 || i == length - 1)
             {
-                string[i] = '|';
+                //string[i] = '|';
+                printf("|");
             }
             else if (i < (int) (progress * length))
             {
-                string[i] = '#';
+                //string[i] = '|';
+                printf("\xE2\x96\x92");
             }
             else
             {
-                string[i] = ' ';
+                //string[i] = ' ';
+                printf(" ");
             }
             string[length] = '\0';
         }
-        printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
+        printf("%d %%", (int)(100*progress));
+        //printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
         printf(RESET_COLOR);
         fflush(stdout); 
         progress_bar_status = progress;

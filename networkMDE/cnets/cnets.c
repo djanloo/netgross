@@ -14,6 +14,7 @@ Network must be given in normalized mode:
 #include <Python.h>
 
 #include "cutils.h"
+#define PROGRESSS_BAR_LENGTH 60
 
 typedef struct sparserow
 {
@@ -234,7 +235,7 @@ PyObject * MDE(PyObject * self, PyObject * args){
     unsigned int child_index;
     for (unsigned int i = 0; i < number_of_steps; i++)
     {   
-        progress_bar(((float)i)/( (float) number_of_steps) , 60);
+        progress_bar(((float)i)/( (float) number_of_steps) , PROGRESSS_BAR_LENGTH);
         for (unsigned int current_node = 0; current_node < G.N_nodes; current_node++)
         {
             for (unsigned int current_child = 0; current_child < G.nodes[current_node].childs_number; current_child++ )
@@ -263,7 +264,7 @@ PyObject * MDE(PyObject * self, PyObject * args){
 }
 
 PyObject * get_positions(PyObject * self, PyObject * args){
-    infoprint("Passing position back to python...");
+    infoprint("Checking and passing positions back to python...");
     PyObject * list = PyList_New(G.N_nodes);
     for (unsigned int n = 0; n < G.N_nodes; n++)
     {
