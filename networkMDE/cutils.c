@@ -5,8 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define infoprint(...) printf("cnets - INFO: ");printf(__VA_ARGS__);fflush(stdout);
-#define errprint(...) fprintf(stderr, "cnets - ERROR: ");fprintf(stderr, __VA_ARGS__);fflush(stderr);
+#include "cutils.h"
 
 float progress_bar_status = 0;
 
@@ -41,7 +40,7 @@ void progress_bar(float progress, int length)
             }
             string[length] = '\0';
         }
-        printf("\33[2K\r%s %d %%", string, (int)(100*progress));
+        printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
         fflush(stdout); 
         progress_bar_status = progress;
     }

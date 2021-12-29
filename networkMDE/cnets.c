@@ -9,13 +9,11 @@ Network must be given in normalized mode:
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "cutils.h"
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define infoprint(...) printf("cnets - INFO: ");printf(__VA_ARGS__);fflush(stdout);
-#define errprint(...) fprintf(stderr, "cnets - ERROR: ");fprintf(stderr, __VA_ARGS__);fflush(stderr);
+#include "cutils.h"
 
 typedef struct sparserow
 {
@@ -156,7 +154,12 @@ PyObject * init_network(PyObject * self, PyObject * args){
 
     // Take the args and divide them in two pyobjects
     infoprint("Parsing...");
-    if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim)) Py_RETURN_NONE;
+    if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim))
+    {
+        printf("\n");
+        errprint("init_network got bad arguments\n");
+        Py_RETURN_NONE;
+    }
     printf("\tDone.\n");
 
     unsigned int N_elements = (unsigned int) PyList_Size(Pvalues);
@@ -389,7 +392,7 @@ PyObject * set_seed(PyObject * self, PyObject * args)
 
 // Methods table definition
 static PyMethodDef cnetsMethods[] = {
-    {"init_network", init_network, METH_VARARGS, "Initializes the network given a sparse list and a list of values"},
+    {"init_network", init_network, METH_VARARGS, "Initializes the network given a sparse list and a list of values.\nARGS\n\tsparse link matrix\t(list)\n\tvalues array\t(list)\n\tembedding dimension\t(int)"},
     {"MDE", MDE, METH_VARARGS, "Executes minumum distortion embedding routine"},
     {"get_positions", get_positions, METH_VARARGS, "Gives the computed positions of the network"},
     {"get_distanceSM", get_distanceSM, METH_VARARGS, "Returns the computed distance sparse matrix"},
