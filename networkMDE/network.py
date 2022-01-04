@@ -221,13 +221,13 @@ class uniNetwork:
 
     @property
     def distanceSM(self):
-        nlinks = np.sum(self.linkM.astype(np.int))
         self._distanceSM = np.array([])
+        dummy = self.distanceM
         for i in range(self.N):
             for j in range(i + 1, self.N):
                 if self.linkM[i, j]:
                     self._distanceSM = np.append(
-                        self._distanceSM, [i, j, self._distanceM[i, j]]
+                        self._distanceSM, [i, j, dummy[i, j]]
                     )
         self._distanceSM = self._distanceSM.reshape((-1, 3))
         return self._distanceSM
@@ -251,7 +251,7 @@ class uniNetwork:
     def distortion(self):
         return np.sum(
             ((self._targetM - self.distanceM) * self.linkM.astype(np.float64)) ** 2
-        )
+        )/len(self.nodes)
 
     def cMDE(self, step=0.1, neg_step=0.001, Nsteps=1000):
         cnets.MDE(step, neg_step, Nsteps)
@@ -285,6 +285,16 @@ class uniNetwork:
                 self._targetM[node.n, other.n] = link.length
                 self._targetM[other.n, node.n] = link.length
         self.targetSM = utils.matrix_to_sparse(self.targetM)
+
+    def distortion_activation(self):
+        actual_lengths = np.sum(np.array(list(self.links.node1.position))
+                                - np.array(list(self.links.node2.position)),
+                                axis=1)**2 
+        actual_lengths = np.sqrt(actual_lengths)
+        targets = np.array(list(self.links.length))
+        distortions = (actual_lengths - targets)/targets
+        for distortion, link in zip(distortions, self.links):
+            link.activation = np.tanh(distortion)
 
     @classmethod
     def Random(cls, number_of_nodes, connection_probability, max_dist=1.0):
@@ -332,6 +342,8 @@ class uniNetwork:
     def __str__(self):
         """Describes the tree"""
         desc = "Network ---------\n"
-        for node in self.nodes.values():
-            desc += str(node)
+        for node in self:
+            desc += "\t" + str(node) + f" (ord. {len(node.synapses)})\n"
+            for synapsis in node.synapses:
+                desc += "\t\t" + str(synapsis.get_child(node)) + "\n" 
         return desc

@@ -116,17 +116,22 @@ def animate_super_network(super_net, super_net_function, **anim_kwargs):
     def _update_graphics(_):
 
         super_net_function()
-
+        super_net.net.distortion_activation()
         activations = super_net.net.links.activation
 
         point_colors = super_net.net.nodes.value
-        line_colors = np.array([hsv_to_rgb((0.25, 1.0, a)) for a in activations])
-        line_alpha = [0.2 + 0.8 * a for a in activations]
+        line_colors = np.array([])
+        for a in activations:
+            if a > 0:
+                line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis = 0)
+            else:
+                line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis = 0)
+        line_colors = line_colors.reshape(-1,3)
+        line_alpha = [1. for a in activations]
 
         update_scatter(ax, super_net.net, point_colors)
         if plot_lines:
             update_lines(ax, super_net.net, line_colors, line_alpha)
-        ax.view_init(elev=10., azim=_/100)
         return (super_net.net.scatplot,) + tuple(super_net.net.links.line)
 
     super_net.net.animation = animation.FuncAnimation(
@@ -158,9 +163,16 @@ def plot_net(net, labels=None):
     activations = net.links.activation
 
     point_colors = net.nodes.value
-    line_colors = np.array([hsv_to_rgb((0.0, 1.0, a)) for a in activations])
+    line_colors = np.array([])
+    for a in activations:
+        if a > 0:
+            line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis = 0)
+        else:
+            line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis = 0)
+
+    line_colors = line_colors.reshape(-1, 3)
     line_alpha = [
-        0.2 + 0.8 * a for a in activations
+        0.2 + 0.8 * abs(a) for a in activations
     ]  # [0.2 + 0.8 * a for a in activations]
 
     print("Updating scatter..", end="", flush=True)

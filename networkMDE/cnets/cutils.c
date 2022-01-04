@@ -6,6 +6,7 @@
 #include <Python.h>
 
 #include "cutils.h"
+#include "cnets.h"
 
 float progress_bar_status = 0;
 
@@ -44,6 +45,8 @@ void progress_bar(float progress, int length)
         }
         printf("%d %%", (int)(100*progress));
         //printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
+        printf(YEL);
+        printf("(D = %.4lf)", get_distortion());
         printf(RESET_COLOR);
         fflush(stdout); 
         progress_bar_status = progress;
@@ -153,12 +156,11 @@ void insert_f(float * array, float value, int position, int length)
     if (position >= length){
         errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
     }
-    float tmp = value, tmptmp;
-    for (int i = position; i >= 0; i--){
-        tmptmp = array[i];
-        array[i] = tmp;
-        tmp = tmptmp;
+    if (position != 0)
+    {
+        insert_f(array, (float) array[position], position - 1, length);
     }
+    array[position] = value;
     return;
 }
 void insert_i(int * array, int value, int position, int length)
@@ -166,11 +168,10 @@ void insert_i(int * array, int value, int position, int length)
     if (position >= length){
         errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
     }
-    int tmp = value, tmptmp;
-    for (int i = position; i >= 0; i--){
-        tmptmp = array[i];
-        array[i] = tmp;
-        tmp = tmptmp;
+    if (position != 0)
+    {
+        insert_i(array, (int) array[position], position - 1, length);
     }
+    array[position] = value;
     return;
 }

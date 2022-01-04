@@ -14,6 +14,8 @@ Network must be given in normalized mode:
 #include <Python.h>
 
 #include "cutils.h"
+#include "cnets.h"
+
 #define PROGRESSS_BAR_LENGTH 60
 
 typedef struct sparserow
@@ -50,9 +52,8 @@ typedef struct graph
     unsigned int embedding_dimension;
 } Graph;
 
-// Global variables remain the same call after call
-Graph G;
 int RAND_INIT = 0;
+Graph G;
 
 // Link nodes in the Graph
 void link_nodes(Node * node, unsigned int child_index, float distance){
@@ -247,7 +248,6 @@ PyObject * MDE(PyObject * self, PyObject * args){
                 child_index = G.nodes[current_node].childs[current_child];
                 actual_distance = euclidean_distance(G.nodes[current_node].position, G.nodes[child_index].position, G.embedding_dimension);                
                 factor = eps*(1.- G.nodes[current_node].distances[current_child]/actual_distance)/G.nodes[current_node].childs_number;
-
                 for (unsigned int d = 0; d < G.embedding_dimension; d++)
                 {
                     G.nodes[current_node].position[d] += factor*(G.nodes[child_index].position[d] - G.nodes[current_node].position[d]) ;
@@ -269,7 +269,7 @@ PyObject * MDE(PyObject * self, PyObject * args){
 }
 
 PyObject * get_positions(PyObject * self, PyObject * args){
-    infoprint("Checking and passing positions back to python...");
+    // infoprint("Checking and passing positions back to python...");
     nancheck();
     PyObject * list = PyList_New(G.N_nodes);
     for (unsigned int n = 0; n < G.N_nodes; n++)
@@ -281,7 +281,6 @@ PyObject * get_positions(PyObject * self, PyObject * args){
         }
         PyList_SetItem(list, n, single);
     }
-    printf("\tDone\n");
     return list;
 }
 
@@ -450,21 +449,33 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
         sort_descendent(neighbor_distances, neighbor_indexes, k);
         for (long other_obj_index = 0; other_obj_index < N_objs; other_obj_index++)
         {
-            if (other_obj_index == obj_index) break;
-
-            other_obj_pos = PyList_to_float(PyList_GetItem(objects, other_obj_index), obj_space_dim);
-            current_distance = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
-            for (k_ = 0; k_ < k; k_++)
+            if (other_obj_index != obj_index)
             {
+                other_obj_pos = PyList_to_float(PyList_GetItem(objects, other_obj_index), obj_space_dim);
+                current_distance = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
                 insertion_index = -1;
-                if (current_distance > neighbor_distances[k_]) break;
-                else if (neighbor_indexes[k_] == other_obj_index) break;
-                else insertion_index = k_;
-            }
-            if (insertion_index != -1)
-            {
-                insert_f(neighbor_distances, (float) current_distance, insertion_index, k); // the typecasting is the only thing that makes it work
-                insert_i(neighbor_indexes, (int) other_obj_index, insertion_index, k);
+
+                for (k_ = 0; k_ < k; k_++)
+                {
+                    // cycles over the current closest neighbors
+                    //
+                    // e.g.:
+                    // 5.0                      5.0                     5.0
+                    // 8.0 6.0 2.0 1.0      8.0 6.0 2.0 1.0     8.0 6.0 2.0 1.0
+                    if (current_distance > neighbor_distances[k_]) break;
+                    else insertion_index = k_;
+                }
+                if (insertion_index > -1)
+                {   
+                    // this prevents redundancy like
+                    // 8.0 6.0 2.0 2.0
+                    // 1    2   3   3
+                    if (neighbor_indexes[insertion_index] != other_obj_index)
+                    {
+                        insert_f(neighbor_distances, (float) current_distance, insertion_index, k); // the typecasting is the only thing that makes it work
+                        insert_i(neighbor_indexes, (int) other_obj_index, insertion_index, k);
+                    }
+                }
             }
         }
         for (k_ = 0; k_ < k; k_++)
@@ -486,9 +497,9 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
 
 void nancheck()
 {
-    for (int d = 0; d < G.embedding_dimension; d++ )
+    for (unsigned int d = 0; d < G.embedding_dimension; d++ )
     {
-        for (int i = 0; i < G.N_nodes; i++)
+        for (unsigned int i = 0; i < G.N_nodes; i++)
         {
             if (isNan(G.nodes[i].position[d]))
             {
@@ -501,6 +512,29 @@ void nancheck()
     return;
 }
 
+float get_distortion()
+{
+    unsigned int node = 0, child = 0;
+    float distortion = 0, actual_distance;
+    float * child_position;
+    for (node = 0; node < G.N_nodes; node++)
+    {
+        for (child = 0; child < G.nodes[node].childs_number; child++)
+        {
+            child_position =  G.nodes[G.nodes[node].childs[child]].position;
+            actual_distance = euclidean_distance(G.nodes[node].position, child_position, G.embedding_dimension);
+            distortion += pow(actual_distance - G.nodes[node].distances[child], 2);
+        }
+    }
+    distortion /= G.N_nodes;
+    return distortion;
+}
+
+// Python wrapper
+PyObject * Py_get_distortion(){
+    return PyFloat_FromDouble(get_distortion());
+}
+
 // Python link part - follow the API ------------------------------------------------------------------------------------
 
 // Methods table definition
@@ -510,6 +544,7 @@ static PyMethodDef cnetsMethods[] = {
     {"get_positions", get_positions, METH_VARARGS, "Gives the computed positions of the network"},
     {"get_distanceSM", get_distanceSM, METH_VARARGS, "Returns the computed distance sparse matrix"},
     {"get_distanceM", get_distanceM, METH_VARARGS,"Returns the distance matrix"},
+    {"get_distortion", Py_get_distortion, METH_VARARGS, "Returns the distortion of the network"},
     {"set_target", set_target, METH_VARARGS,"sets the target sparse matrix"},
     {"set_seed", set_seed, METH_VARARGS, "Set the seed for random numbers"},
     {"stupid_knn", stupid_knn, METH_VARARGS, "A stupid k-nearest neighbor graph generator."},

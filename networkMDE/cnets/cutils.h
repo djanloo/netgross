@@ -27,6 +27,7 @@ float * PyList_to_float(PyObject * Pylist, unsigned int N_elements);
 float euclidean_distance(float * pos1, float * pos2, unsigned int dim);
 bool isNan(float number);
 void print_float_array(float * array, int length);
+void print_int_array(int * array, int length);
 void sort_descendent(float * distances, int * indexes, int n);
 void insert_f(float * array, float value, int position, int length);
 void insert_i(int * array, int value, int position, int length);

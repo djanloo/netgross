@@ -34,8 +34,10 @@ class cnetsTest(unittest.TestCase):
         distM = np.array(cnets.get_distanceM())
         # print(distM)
         distortion = np.mean((distM - self.correct_dist_M) ** 2)
+        cdistortion = cnets.get_distortion()
         # print(distortion)
         self.assertLessEqual(distortion, 0.5)
+        self.assertEqual(distortion, cdistortion)
     
 if __name__ == "__main__":
     unittest.main()
