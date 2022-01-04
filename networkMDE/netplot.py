@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import hsv_to_rgb
 
+from networkMDE import network
+
 plt.rc("font", family="serif")
 
 # Default setttings for plots
@@ -12,7 +14,6 @@ fig_kwargs = {"figsize": (5, 5)}
 scat_kwargs = {"cmap": "viridis", "s": 30, "alpha": 1}
 line_kwargs = {"color": "k", "alpha": 1, "lw": 0.4}
 plot_lines = True
-
 
 def get_graphics(net):
     """Generates the figure, axis and empty scatterplot/lines for the net."""
@@ -125,13 +126,26 @@ def animate_super_network(super_net, super_net_function, **anim_kwargs):
         update_scatter(ax, super_net.net, point_colors)
         if plot_lines:
             update_lines(ax, super_net.net, line_colors, line_alpha)
-
+        ax.view_init(elev=10., azim=_/100)
         return (super_net.net.scatplot,) + tuple(super_net.net.links.line)
 
     super_net.net.animation = animation.FuncAnimation(
         fig, _update_graphics, **anim_kwargs
     )
     return super_net.net.animation
+
+def animate_MDE(net, updates_per_frame, MDEkwargs, anim_kwargs):
+    class dummy:
+        def __init__(self):
+            self.net = net
+        
+        def update(self):
+            for _ in range(updates_per_frame):
+                self.net.cMDE(**MDEkwargs)
+    
+    supernet = dummy()
+    animate_super_network(supernet, supernet.update, **anim_kwargs)
+    return supernet.net.animation
 
 
 def plot_net(net, labels=None):

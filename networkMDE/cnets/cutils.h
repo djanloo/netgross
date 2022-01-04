@@ -16,12 +16,17 @@
 
 #define infoprint(...) printf("cnets - "BLU "INFO" RESET_COLOR ": ");printf(__VA_ARGS__);printf(RESET_COLOR);fflush(stdout);
 #define errprint(...) fprintf(stderr, "\ncnets - "BRED "ERROR" RESET_COLOR ": ");fprintf(stderr, __VA_ARGS__);printf(RESET_COLOR);fflush(stderr);
+#define warnprint(...) fprintf(stderr, "\ncnets - "YEL "WARNING" RESET_COLOR ": ");fprintf(stderr, __VA_ARGS__);printf(RESET_COLOR);fflush(stderr);
 
 typedef struct sparserow SparseRow;
 extern float progress_bar_status;
 
 void progress_bar(float progress, int length);
 SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links);
-float * PyList_to_double(PyObject * Pylist, unsigned int N_elements);
+float * PyList_to_float(PyObject * Pylist, unsigned int N_elements);
 float euclidean_distance(float * pos1, float * pos2, unsigned int dim);
 bool isNan(float number);
+void print_float_array(float * array, int length);
+void sort_descendent(float * distances, int * indexes, int n);
+void insert_f(float * array, float value, int position, int length);
+void insert_i(int * array, int value, int position, int length);

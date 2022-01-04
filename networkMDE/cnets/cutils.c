@@ -68,7 +68,7 @@ SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links){
     return SM;
 }
 
-float * PyList_to_double(PyObject * Pylist, unsigned int N_elements){
+float * PyList_to_float(PyObject * Pylist, unsigned int N_elements){
 
     float * dlist = (float *) malloc(sizeof(float)*N_elements);
     for (unsigned int i = 0; i < N_elements; i++)
@@ -98,4 +98,79 @@ bool isNan(float number){
     }
 }
 
+bool isOrdered(float * array, int n){
+    bool sorted = true;
+    for (int i = 0; i< n-1; i++){
+        if (array[i] < array[i+1]){
+            sorted = false;
+            break;
+        }
+    }
+    return sorted;
+}
 
+void sort_descendent(float * distances, int * indexes, int n)
+{
+    /* Please don't judge me, I could have done it fancier */
+    float tmp_dist;
+    int tmp_ind;
+    while (!isOrdered(distances,n)){
+        for (int i = 0; i < n-1; i++)
+        {
+            if (distances[i] < distances[i+1])
+            {
+                tmp_dist = distances[i];
+                distances[i] = distances[i+1];
+                distances[i+1] = tmp_dist;
+                
+                tmp_ind = indexes[i];
+                indexes[i] = indexes[i+1];
+                indexes[i+1] = tmp_ind;
+            }
+        }
+    } 
+}
+
+void print_float_array(float * array, int length){
+    printf("[ ");
+    for (int d = 0; d < length; d++){
+        printf("%lf,", array[d]);
+    }
+    printf("]");
+}
+
+void print_int_array(int * array, int length){
+    printf("[ ");
+    for (int d = 0; d < length; d++){
+        printf("%d,", array[d]);
+    }
+    printf("]");
+}
+
+
+void insert_f(float * array, float value, int position, int length)
+{
+    if (position >= length){
+        errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
+    }
+    float tmp = value, tmptmp;
+    for (int i = position; i >= 0; i--){
+        tmptmp = array[i];
+        array[i] = tmp;
+        tmp = tmptmp;
+    }
+    return;
+}
+void insert_i(int * array, int value, int position, int length)
+{
+    if (position >= length){
+        errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
+    }
+    int tmp = value, tmptmp;
+    for (int i = position; i >= 0; i--){
+        tmptmp = array[i];
+        array[i] = tmp;
+        tmp = tmptmp;
+    }
+    return;
+}

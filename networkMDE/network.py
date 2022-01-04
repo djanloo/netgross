@@ -314,8 +314,10 @@ class uniNetwork:
         np.fill_diagonal(M, 1.0)
         links = (M < connection_probability).astype(np.float32)
         M = M * links * max_dist
-
-        return uniNetwork.from_adiacence(M)
+        net = uniNetwork.from_adiacence(M)
+        for node in net:
+            node.value = np.random.uniform(0,1)
+        return net
 
     def __iter__(self):
         self.i = 0

@@ -57,6 +57,11 @@ int RAND_INIT = 0;
 // Link nodes in the Graph
 void link_nodes(Node * node, unsigned int child_index, float distance){
 
+    if (node->n == child_index)
+    {
+        warnprint("autolink not allowed: skipped");
+        return;
+    }
     // Adds label of child to child array
     node -> childs = (unsigned int *) realloc(node -> childs, sizeof(unsigned int)*( (node -> childs_number) + 1));
     if (node -> childs == NULL)
@@ -177,9 +182,8 @@ PyObject * init_network(PyObject * self, PyObject * args){
     }
 
     // Convert each element of the lists into a valid element of the C-object
-    infoprint("Converting Py -> C..");
     SM = PyList_to_SM(Psparse, N_links);
-    values = PyList_to_double(Pvalues, N_elements);
+    values = PyList_to_float(Pvalues, N_elements);
     printf("\tDone.\n");
 
     infoprint("Generating network...");
@@ -212,7 +216,7 @@ void move_away_from_random_not_child(unsigned int node, float eps){
     {
         G.nodes[node].position[d] += eps/(dist*dist)*(G.nodes[node].position[d] - G.nodes[not_child].position[d]);
         if (isNan(G.nodes[node].position[d])){
-            printf("NAN detected\n");
+            errprint("NAN detected\n");
             printf("%d- %d --> %lf\n", node, not_child, dist);
             exit(5);
         }
@@ -230,7 +234,7 @@ PyObject * MDE(PyObject * self, PyObject * args){
         Py_RETURN_NONE;
     }
     infoprint("starting MDE with eps = %lf, neg_eps = %lf, Nsteps = %d\n",eps, neg_eps, number_of_steps);
-
+    nancheck();
     float actual_distance = 0., factor;
     unsigned int child_index;
     for (unsigned int i = 0; i < number_of_steps; i++)
@@ -259,23 +263,20 @@ PyObject * MDE(PyObject * self, PyObject * args){
     }
     printf("\n");
     infoprint("MDE end\n");
+    nancheck();
     progress_bar_status = 0;
     Py_RETURN_NONE;
 }
 
 PyObject * get_positions(PyObject * self, PyObject * args){
     infoprint("Checking and passing positions back to python...");
+    nancheck();
     PyObject * list = PyList_New(G.N_nodes);
     for (unsigned int n = 0; n < G.N_nodes; n++)
     {
         PyObject * single = PyList_New(G.embedding_dimension);
         for (unsigned int d = 0; d < G.embedding_dimension; d++)
         {
-            if (isNan(G.nodes[n].position[d]))
-            {
-                errprint("NAN detected\n");
-                exit(5);
-            }
             PyList_SetItem(single, d, PyFloat_FromDouble(G.nodes[n].position[d]));
         }
         PyList_SetItem(list, n, single);
@@ -394,7 +395,113 @@ PyObject * set_seed(PyObject * self, PyObject * args)
     Py_RETURN_NONE;
 }
 
-// Python link part - follow the API
+PyObject * stupid_knn(PyObject * self, PyObject * args)
+{
+    /* Implementation of a really stupid knn graph contruction
+    by stupid N*N lookup in euclidean ndistance 
+    I'm not proud of this but I'm waiting to implement EFANNA
+    
+    Args
+    ----
+        objects 
+            a list of vectors in Rn
+        k
+            the k in knn
+
+    */
+    infoprint("stupid_knn begins\n");
+    nancheck();
+    PyObject * objects;
+    int k;
+    if (!PyArg_ParseTuple(args, "Oi", &objects, &k)){
+       errprint("supid_knn - parsing failed\n");
+       Py_RETURN_NONE;
+    }
+    if (k == 0){
+        errprint("stupid_knn - k cannot be zero\n");
+        exit(70000);
+    }
+    
+    int N_objs = PyList_Size(objects);
+    unsigned int obj_space_dim = PyList_Size(PyList_GetItem(objects, 0));
+
+    infoprint("requested knn with k = %d of %d objects in R%d\n",k,N_objs, obj_space_dim);
+    if (k > N_objs)
+    {
+        errprint("stupid_knn - k cannot be more than the total number of elements\n");
+        exit(4);
+    }
+    // big stupid loop
+    // please god forgive me for what I'm doing
+    PyObject * sparse_knn = PyList_New(0), * tmp;
+    int neighbor_indexes[k], init_index, k_, insertion_index;
+    float neighbor_distances[k], current_distance;
+    float *obj_pos, *other_obj_pos;
+    for (long obj_index = 0; obj_index < N_objs; obj_index++)
+    {
+        obj_pos = PyList_to_float(PyList_GetItem(objects, obj_index) , obj_space_dim);
+        for (k_ = 0; k_ < k; k_++)
+        {
+            init_index = (int) (obj_index + k_ + 1 )%N_objs;
+            neighbor_indexes[k_] = init_index;
+            other_obj_pos = PyList_to_float(PyList_GetItem(objects, init_index), obj_space_dim);
+            neighbor_distances[k_] = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
+        }
+        sort_descendent(neighbor_distances, neighbor_indexes, k);
+        for (long other_obj_index = 0; other_obj_index < N_objs; other_obj_index++)
+        {
+            if (other_obj_index == obj_index) break;
+
+            other_obj_pos = PyList_to_float(PyList_GetItem(objects, other_obj_index), obj_space_dim);
+            current_distance = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
+            for (k_ = 0; k_ < k; k_++)
+            {
+                insertion_index = -1;
+                if (current_distance > neighbor_distances[k_]) break;
+                else if (neighbor_indexes[k_] == other_obj_index) break;
+                else insertion_index = k_;
+            }
+            if (insertion_index != -1)
+            {
+                insert_f(neighbor_distances, (float) current_distance, insertion_index, k); // the typecasting is the only thing that makes it work
+                insert_i(neighbor_indexes, (int) other_obj_index, insertion_index, k);
+            }
+        }
+        for (k_ = 0; k_ < k; k_++)
+        {
+            tmp = PyList_New(3);
+            PyList_SetItem(tmp, 0, PyLong_FromLong(obj_index));
+            PyList_SetItem(tmp, 1, PyLong_FromLong(neighbor_indexes[k_]));
+            PyList_SetItem(tmp, 2, PyFloat_FromDouble(neighbor_distances[k_]));
+            PyList_Append(sparse_knn, tmp);
+            if(obj_index == neighbor_indexes[k_]){
+                errprint("something went wrong\n");
+                exit(23974);
+            }
+        }
+    }
+    infoprint("stupid_knn done.\n");
+    return sparse_knn;
+}
+
+void nancheck()
+{
+    for (int d = 0; d < G.embedding_dimension; d++ )
+    {
+        for (int i = 0; i < G.N_nodes; i++)
+        {
+            if (isNan(G.nodes[i].position[d]))
+            {
+                errprint("NaN detected\n");
+                exit(5);
+            }
+        }
+
+    }
+    return;
+}
+
+// Python link part - follow the API ------------------------------------------------------------------------------------
 
 // Methods table definition
 static PyMethodDef cnetsMethods[] = {
@@ -405,6 +512,7 @@ static PyMethodDef cnetsMethods[] = {
     {"get_distanceM", get_distanceM, METH_VARARGS,"Returns the distance matrix"},
     {"set_target", set_target, METH_VARARGS,"sets the target sparse matrix"},
     {"set_seed", set_seed, METH_VARARGS, "Set the seed for random numbers"},
+    {"stupid_knn", stupid_knn, METH_VARARGS, "A stupid k-nearest neighbor graph generator."},
     {NULL, NULL, 0, NULL}//Guardian of The Table
 };
 
