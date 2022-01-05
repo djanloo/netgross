@@ -16,7 +16,7 @@ class cnetsTest(unittest.TestCase):
 
     def setUp(self):
         self.squareSM = [[0, 1, 0.8], [1, 2, 0.8], [2, 3, 0.8], [3, 0, 0.8]]
-        diag = np.sqrt(2)
+        diag = 0.8*np.sqrt(2)
         self.correct_dist_M = np.array(
             [
                 [0.0, 1.0, diag, 1.0],
@@ -30,14 +30,10 @@ class cnetsTest(unittest.TestCase):
         cnets.init_network(self.squareSM, self.values, 2)
 
     def test_MDE(self):
-        cnets.MDE(0.1, 0.01, 100)
+        cnets.MDE(0.1, 0.00, 1000)
         distM = np.array(cnets.get_distanceM())
-        # print(distM)
-        distortion = np.mean((distM - self.correct_dist_M) ** 2)
-        cdistortion = cnets.get_distortion()
-        # print(distortion)
-        self.assertLessEqual(distortion, 0.5)
-        self.assertEqual(distortion, cdistortion)
+        distortion = cnets.get_distortion()
+        self.assertLessEqual(distortion, 1e-6) # Dangerous, may fail sometimes, must be changed
     
 if __name__ == "__main__":
     unittest.main()
