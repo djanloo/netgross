@@ -1,7 +1,7 @@
+import numpy as np
 import unittest
 from networkMDE.classiter import cdict, cset, clist
 from networkMDE.network import Node, uniLink, uniNetwork
-
 
 class testNodeLinks(unittest.TestCase):
     def setUp(self):
@@ -36,6 +36,13 @@ class testNodeLinks(unittest.TestCase):
                 + f"links = {rn.links}\n"
                 + f"links hash = {[hash(link) for link in rn.links]}",
             )
+
+    def test_value_assignment(self):
+        N = 100
+        rn = uniNetwork.Random(N, 1)
+        values = np.random.uniform(0,1,size=N)
+        rn.values = values
+        self.assertTrue((values == rn.values).all())
 
 
 if __name__ == "__main__":

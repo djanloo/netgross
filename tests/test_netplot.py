@@ -1,3 +1,4 @@
+from matplotlib.pyplot import colorbar
 import numpy as np
 import unittest
 from networkMDE import network, netplot
@@ -56,12 +57,12 @@ class netPlotStaticTest(unittest.TestCase):
     def test_2D_static_plot(self):
         self.net.initialize_embedding(dim=2)
         self.net.cMDE(step=0.1, neg_step=0.1, Nsteps=1000)
-        netplot.plot_net(self.net, labels=self.labels)
+        netplot.plot_net(self.net, labels=self.labels, colorbar=True)
 
     def test_3D_static_plot(self):
         self.net.initialize_embedding(dim=3)
         self.net.cMDE(step=0.1, neg_step=0.1, Nsteps=1000)
-        netplot.plot_net(self.net, labels=self.labels)
+        netplot.plot_net(self.net, labels=self.labels, colorbar=True)
 
 
 class netPlotDynamicTest(unittest.TestCase):
