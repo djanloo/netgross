@@ -4,6 +4,8 @@ distorted way possible (MDE).
 author: djanloo
 date: 20 nov 21
 """
+from matplotlib.pyplot import connect
+from networkMDE import network
 import numpy as np
 
 from termcolor import colored
@@ -42,13 +44,16 @@ class Node:
     def position(self, position):
         self._position = position
 
-    def connect(self, child, distance):
-
-        # connections are called one time for couple
-        link = uniLink(self, child)
-        link.length = distance
-        self.synapses += link
-        child.synapses += link
+    def connect(self, child, distance, directed=False):
+        if directed:
+            link = dirLink(self, child)
+            link.length = distance
+            self.synapses += link
+        else:
+            link = undLink(self, child)
+            link.length = distance
+            self.synapses += link
+            child.synapses += link
         return link
 
     def __hash__(self):
@@ -58,7 +63,51 @@ class Node:
         return f"N({self.n})"
 
 
-class uniLink:
+class dirLink:
+    """Link class to handle directed links.
+    As opposed to undLink, it does not implement any equivalence relation,
+    so it is a mere mist with named entries.
+    """
+
+    def __init__(self, node1, node2):
+
+        # The linked nodes
+        # Nomenclature was chosen to be compatible with undLink
+        # so no parent-child relation is explicitly contained in attributes' names
+        # However node1 must be intended as parent
+        # and node2 as child
+        self.node1 = node1
+        self.node2 = node2
+
+        # The value of activation of the link and its length
+        self.activation = 0
+        self.length = None
+
+        # Related graphical objects
+        self.line = None
+
+    def get_child(self, node):
+        if node == self.node1:
+            return self.node2
+        else:
+            raise ValueError(f"Invalid node child request for {node} in {self}")
+
+    def __eq__(self, other):
+        identical = self.node1 == other.node1 and self.node2 == other.node2
+        return identical
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        """Symmetric hash function for equivalence relation"""
+        return hash((self.node1.n, self.node2.n))
+
+    def __str__(self):
+        return f"dL({self.node1.n}->{self.node2.n}:{self.length:1.2f})"
+
+
+class undLink:
     """Link class to handle unidirected links
 
     Implements an equivalence relationships between tuples:
@@ -107,14 +156,14 @@ class uniLink:
         return f"uL({self.node1.n}<->{self.node2.n}:{self.length:1.2f})"
 
 
-class uniNetwork:
+class Network:
     """Compositional class for describing networks."""
 
-    def __init__(self, nodes):
+    def __init__(self):
 
         # Nodes are contained in a dictionary because are labelled
         # but the insertion is not contiguous
-        self.nodes = ci.cdict(nodes)  # TODO: standard constructor does not work
+        self.nodes = ci.cdict()  # TODO: standard constructor does not work
 
         # Links are contained in a set beacuse it really doesn't make sense
         # to define an ordering of links
@@ -136,7 +185,16 @@ class uniNetwork:
         # cnets parameters
         self.is_cnet_initialized = False
 
-        # self.initialize_embedding(dim=2)
+    def add_link(self, node1, node2, distance):
+        """This is what differs between directed and undirected nets, the rest seems almost identical.
+
+        As a convention for the arguments' order I choose:
+
+        add_link(node1, node2, distance) == "set node2 as a child of node1 at given distance"
+
+        so the first node is connected to the second but the opposite is not true.
+        """
+        raise NotImplementedError()
 
     def initialize_embedding(self, dim=2):
         cnets.init_network(self.targetSM, list(self.nodes.value), dim)
@@ -145,23 +203,12 @@ class uniNetwork:
         self.repr_dim = dim
         self.is_cnet_initialized = True
 
-    def add_couple(self, node1, node2, distance):
-
-        self.linkM[node1.n, node2.n] = True
-        self.linkM[node2.n, node1.n] = True
-
-        self._targetM[node1.n, node2.n] = distance
-        self._targetM[node2.n, node1.n] = distance
-
-        self.nodes += {node1.n: node1, node2.n: node2}
-        self.links += node1.connect(node2, distance)
-
     @classmethod
     def from_sparse(cls, sparse_matrix):
         """generates network from a sparse matrix"""
 
         # raw init
-        net = cls({})
+        net = cls()
 
         net._targetSM = np.array(sparse_matrix)
         net.N = int(np.max(net._targetSM.transpose()[:2])) + 1
@@ -176,7 +223,7 @@ class uniNetwork:
 
             i, j = np.uintc(i), np.uintc(j)
 
-            net.add_couple(
+            net.add_link(
                 net.nodes.get(i, Node(i)),
                 net.nodes.get(j, Node(j)),
                 np.float32(distance),
@@ -202,7 +249,7 @@ class uniNetwork:
             raise ValueError("Matrix has non-null diagonal")
 
         sparseM = utils.matrix_to_sparse(matrix)
-        net = uniNetwork.from_sparse(sparseM)
+        net = cls.from_sparse(sparseM)
         return net
 
     @property
@@ -221,14 +268,14 @@ class uniNetwork:
 
     @property
     def distanceSM(self):
+        """While the linkedness is not symmetric, the distance inside the embedding
+        is a symmetric function, so can be evaluated i, j > i+1"""
         self._distanceSM = np.array([])
         dummy = self.distanceM
         for i in range(self.N):
             for j in range(i + 1, self.N):
                 if self.linkM[i, j]:
-                    self._distanceSM = np.append(
-                        self._distanceSM, [i, j, dummy[i, j]]
-                    )
+                    self._distanceSM = np.append(self._distanceSM, [i, j, dummy[i, j]])
         self._distanceSM = self._distanceSM.reshape((-1, 3))
         return self._distanceSM
 
@@ -251,12 +298,12 @@ class uniNetwork:
     def distortion(self):
         return np.sum(
             ((self._targetM - self.distanceM) * self.linkM.astype(np.float64)) ** 2
-        )/len(self.nodes)
+        ) / len(self.nodes)
 
-    @property 
+    @property
     def values(self):
         return [node.value for node in self]
-    
+
     @values.setter
     def values(self, givens):
         if len(givens) != self.N:
@@ -273,21 +320,6 @@ class uniNetwork:
     def to_scatter(self):
         return np.array(list(self.nodes.position)).transpose()
 
-    '''
-    # this function is useless
-    def print_distanceM(self, target=False):
-        M = self._targetM if target else self.distanceM
-        title = "Target matrix" if target else "Current matrix "
-        print(title + 30 * "-")
-        for i in range(self.N):
-            for j in range(self.N):
-                color = "green" if self.linkM[i, j] else "red"
-                attrs = ["dark"] if i == j else ["bold"]
-                print(colored(f"{M[i,j]:.2}", color, attrs=attrs), end="\t")
-            print()
-        print()
-    '''
-
     def update_target_matrix(self):
         print("Pynet - updating targets")
         for node in self.nodes:
@@ -298,12 +330,17 @@ class uniNetwork:
         self.targetSM = utils.matrix_to_sparse(self.targetM)
 
     def distortion_activation(self):
-        actual_lengths = np.sum(np.array(list(self.links.node1.position))
-                                - np.array(list(self.links.node2.position)),
-                                axis=1)**2 
+        actual_lengths = (
+            np.sum(
+                np.array(list(self.links.node1.position))
+                - np.array(list(self.links.node2.position)),
+                axis=1,
+            )
+            ** 2
+        )
         actual_lengths = np.sqrt(actual_lengths)
         targets = np.array(list(self.links.length))
-        distortions = (actual_lengths - targets)/targets
+        distortions = (actual_lengths - targets) / targets
         for distortion, link in zip(distortions, self.links):
             link.activation = np.tanh(distortion)
 
@@ -335,9 +372,9 @@ class uniNetwork:
         np.fill_diagonal(M, 1.0)
         links = (M < connection_probability).astype(np.float32)
         M = M * links * max_dist
-        net = uniNetwork.from_adiacence(M)
+        net = cls.from_adiacence(M)
         for node in net:
-            node.value = np.random.uniform(0,1)
+            node.value = np.random.uniform(0, 1)
         return net
 
     def __iter__(self):
@@ -356,5 +393,34 @@ class uniNetwork:
         for node in self:
             desc += "\t" + str(node) + f" (ord. {len(node.synapses)})\n"
             for synapsis in node.synapses:
-                desc += "\t\t" + str(synapsis.get_child(node)) + "\n" 
+                desc += "\t\t" + str(synapsis.get_child(node)) + "\n"
         return desc
+
+
+class undNetwork(network.Network):
+    def __init__(self):
+        super().__init__()
+
+    def add_link(self, node1, node2, distance):
+
+        self.linkM[node1.n, node2.n] = True
+        self.linkM[node2.n, node1.n] = True
+
+        self._targetM[node1.n, node2.n] = distance
+        self._targetM[node2.n, node1.n] = distance
+
+        self.nodes += {node1.n: node1, node2.n: node2}
+        self.links += node1.connect(node2, distance, directed=False)
+
+
+class dirNetwork(network.Network):
+    def __init__(self):
+        super().__init__()
+
+    def add_link(self, node1, node2, distance):
+
+        self.linkM[node1.n, node2.n] = True
+        self._targetM[node1.n, node2.n] = distance
+
+        self.nodes += {node1.n: node1, node2.n: node2}
+        self.links += node1.connect(node2, distance, directed=True)

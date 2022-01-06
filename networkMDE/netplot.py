@@ -15,9 +15,10 @@ scat_kwargs = {"cmap": "viridis", "s": 30, "alpha": 1}
 line_kwargs = {"color": "k", "alpha": 1, "lw": 0.4}
 plot_lines = True
 
-# This must be filled with the return 
+# This must be filled with the return
 # mappable from set_array for colorbars
-mappable = None 
+mappable = None
+
 
 def get_graphics(net):
     """Generates the figure, axis and empty scatterplot/lines for the net."""
@@ -127,11 +128,11 @@ def animate_super_network(super_net, super_net_function, **anim_kwargs):
         line_colors = np.array([])
         for a in activations:
             if a > 0:
-                line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis = 0)
+                line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis=0)
             else:
-                line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis = 0)
-        line_colors = line_colors.reshape(-1,3)
-        line_alpha = [1. for a in activations]
+                line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis=0)
+        line_colors = line_colors.reshape(-1, 3)
+        line_alpha = [1.0 for a in activations]
 
         update_scatter(ax, super_net.net, point_colors)
         if plot_lines:
@@ -143,15 +144,16 @@ def animate_super_network(super_net, super_net_function, **anim_kwargs):
     )
     return super_net.net.animation
 
+
 def animate_MDE(net, updates_per_frame, MDEkwargs, anim_kwargs):
     class dummy:
         def __init__(self):
             self.net = net
-        
+
         def update(self):
             for _ in range(updates_per_frame):
                 self.net.cMDE(**MDEkwargs)
-    
+
     supernet = dummy()
     animate_super_network(supernet, supernet.update, **anim_kwargs)
     return supernet.net.animation
@@ -170,9 +172,9 @@ def plot_net(net, labels=None, colorbar=False):
     line_colors = np.array([])
     for a in activations:
         if a > 0:
-            line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis = 0)
+            line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis=0)
         else:
-            line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis = 0)
+            line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis=0)
 
     line_colors = line_colors.reshape(-1, 3)
     line_alpha = [

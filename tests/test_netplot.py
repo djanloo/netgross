@@ -5,10 +5,10 @@ from networkMDE import network, netplot
 import cnets
 
 
-class dummySuperNet(network.uniNetwork):
+class dummySuperNet(network.undNetwork):
     def __init__(self, embedding_dimension):
 
-        self.net = network.uniNetwork.Random(20, 0.7)
+        self.net = network.undNetwork.Random(20, 0.7)
         for node in self.net:
             for link in node.synapses:
                 link.length = np.float32(1.0)  # must be done using numpy types
@@ -51,7 +51,7 @@ class dummySuperNet(network.uniNetwork):
 
 class netPlotStaticTest(unittest.TestCase):
     def setUp(self):
-        self.net = network.uniNetwork.Random(10, 1.0)
+        self.net = network.undNetwork.Random(10, 1.0)
         self.labels = [f"{_.n}" for _ in self.net]
 
     def test_2D_static_plot(self):
