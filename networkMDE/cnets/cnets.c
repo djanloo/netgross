@@ -53,11 +53,16 @@ typedef struct graph
 } Graph;
 
 int RAND_INIT = 0;
+float NEGATIVE_SAMPLING_FRACTION = 0.1;
 Graph G;
 
 // Link nodes in the Graph
 void link_nodes(Node * node, unsigned int child_index, float distance){
-
+    if (distance <= 0)
+    {
+        warnprint("link(%d,%d) skipped - Distance must be a positive number (%lf)\n",node->n, child_index, distance);
+        return;
+    }
     if (node->n == child_index)
     {
         warnprint("autolink not allowed: skipped");
@@ -79,11 +84,7 @@ void link_nodes(Node * node, unsigned int child_index, float distance){
         errprint("!!! cannot allocate memory !!!\n");
         exit(-1);
     }
-    if (distance < 0)
-    {
-        errprint("link(%d,%d) - Distance cannot be a negative number (%lf)\n",node->n, child_index, distance);
-        exit(2);
-    }
+
     (node -> distances)[node -> childs_number] = distance;
 
     node -> childs_number = (node -> childs_number) + 1;
@@ -165,14 +166,12 @@ PyObject * init_network(PyObject * self, PyObject * args){
     float * values = NULL;
 
     // Take the args and divide them in two pyobjects
-    infoprint("Parsing...");
     if (!PyArg_ParseTuple(args,"OOi",&Psparse, &Pvalues, &embedding_dim))
     {
         printf("\n");
         errprint("init_network got bad arguments\n");
         Py_RETURN_NONE;
     }
-    printf("\tDone.\n");
 
     unsigned int N_elements = (unsigned int) PyList_Size(Pvalues);
     unsigned long N_links = (unsigned long) PyList_Size(Psparse);
@@ -185,7 +184,6 @@ PyObject * init_network(PyObject * self, PyObject * args){
     // Convert each element of the lists into a valid element of the C-object
     SM = PyList_to_SM(Psparse, N_links);
     values = PyList_to_float(Pvalues, N_elements);
-    printf("\tDone.\n");
 
     infoprint("Generating network...");
     G = to_Net(SM, values, N_elements, N_links);
@@ -198,6 +196,7 @@ PyObject * init_network(PyObject * self, PyObject * args){
     infoprint("Random initialization in R%d...", G.embedding_dimension);
     random_init();
     printf("\tDone.\n");
+    nancheck();
     Py_RETURN_NONE;
 }
 
@@ -218,7 +217,7 @@ void move_away_from_random_not_child(unsigned int node, float eps){
         G.nodes[node].position[d] += eps/(dist*dist)*(G.nodes[node].position[d] - G.nodes[not_child].position[d]);
         if (isNan(G.nodes[node].position[d])){
             errprint("NAN detected\n");
-            printf("%d- %d --> %lf\n", node, not_child, dist);
+            printf("%d <-> %d = %lf\n", node, not_child, dist);
             exit(5);
         }
     }
@@ -240,21 +239,27 @@ PyObject * MDE(PyObject * self, PyObject * args){
     unsigned int child_index;
     for (unsigned int i = 0; i < number_of_steps; i++)
     {   
-        progress_bar(((float)i)/( (float) number_of_steps) , PROGRESSS_BAR_LENGTH);
+        progress_bar(((float)i)/( (float) number_of_steps) , PROGRESSS_BAR_LENGTH, 1);
         for (unsigned int current_node = 0; current_node < G.N_nodes; current_node++)
         {
             for (unsigned int current_child = 0; current_child < G.nodes[current_node].childs_number; current_child++ )
             {
                 child_index = G.nodes[current_node].childs[current_child];
-                actual_distance = euclidean_distance(G.nodes[current_node].position, G.nodes[child_index].position, G.embedding_dimension);                
-                factor = eps*(1.- G.nodes[current_node].distances[current_child]/actual_distance)/G.nodes[current_node].childs_number;
-                for (unsigned int d = 0; d < G.embedding_dimension; d++)
-                {
-                    G.nodes[current_node].position[d] += factor*(G.nodes[child_index].position[d] - G.nodes[current_node].position[d]) ;
+                actual_distance = euclidean_distance(G.nodes[current_node].position, G.nodes[child_index].position, G.embedding_dimension);
+                if (actual_distance == 0.0){
+                    warnprint("MDE - skipped update (zero distance in embedding): link(%d, %d) = %lf",current_node, child_index, G.nodes[current_node].distances[current_child]);
+                }
+                else
+                {              
+                    factor = eps*(1.- G.nodes[current_node].distances[current_child]/actual_distance)/G.nodes[current_node].childs_number;
+                    for (unsigned int d = 0; d < G.embedding_dimension; d++)
+                    {
+                        G.nodes[current_node].position[d] += factor*(G.nodes[child_index].position[d] - G.nodes[current_node].position[d]) ;
+                    }
                 }
             }
             if (neg_eps != 0.){
-                for (unsigned int mv_aw = 0; mv_aw < (unsigned int)(0.10*G.N_nodes); mv_aw++)
+                for (unsigned int mv_aw = 0; mv_aw < (unsigned int)(NEGATIVE_SAMPLING_FRACTION*G.N_nodes); mv_aw++)
                 {
                     move_away_from_random_not_child(current_node, neg_eps);
                 }
@@ -394,6 +399,20 @@ PyObject * set_seed(PyObject * self, PyObject * args)
     Py_RETURN_NONE;
 }
 
+PyObject * set_negative_sampling_fraction(PyObject * self, PyObject * args)
+{
+    float neg_samp_frac;
+    if (!PyArg_ParseTuple(args, "f", &neg_samp_frac)){
+        errprint("parsing failed in set_negative_sampling()\n");
+    }
+    if (neg_samp_frac > 1.){
+        errprint("negative sampling fration must be > 0 and < 1\n");
+    }
+    NEGATIVE_SAMPLING_FRACTION = neg_samp_frac;
+    Py_RETURN_NONE;
+}
+
+
 PyObject * stupid_knn(PyObject * self, PyObject * args)
 {
     /* Implementation of a really stupid knn graph contruction
@@ -408,7 +427,6 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
             the k in knn
 
     */
-    infoprint("stupid_knn begins\n");
     nancheck();
     PyObject * objects;
     int k;
@@ -420,7 +438,10 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
         errprint("stupid_knn - k cannot be zero\n");
         exit(70000);
     }
-    
+    if (!PyList_CheckExact(objects)){
+        errprint("stupid_knn - the given list of objects is not a list (numpy array not supported yet).\n");
+        exit(5);
+    }
     int N_objs = PyList_Size(objects);
     unsigned int obj_space_dim = PyList_Size(PyList_GetItem(objects, 0));
 
@@ -433,18 +454,30 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     // big stupid loop
     // please god forgive me for what I'm doing
     PyObject * sparse_knn = PyList_New(0), * tmp;
-    int neighbor_indexes[k], init_index, k_, insertion_index;
+    int neighbor_indexes[k], init_index, k_, insertion_index, number_of_links = 0, found_initials = 0;
     float neighbor_distances[k], current_distance;
     float *obj_pos, *other_obj_pos;
     for (long obj_index = 0; obj_index < N_objs; obj_index++)
     {
+        progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
         obj_pos = PyList_to_float(PyList_GetItem(objects, obj_index) , obj_space_dim);
-        for (k_ = 0; k_ < k; k_++)
+
+        // Random initialization of neighbors array
+        found_initials = 0;
+        k_ = 0;
+        while (found_initials < k)
         {
             init_index = (int) (obj_index + k_ + 1 )%N_objs;
-            neighbor_indexes[k_] = init_index;
             other_obj_pos = PyList_to_float(PyList_GetItem(objects, init_index), obj_space_dim);
-            neighbor_distances[k_] = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
+            current_distance = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
+            if (current_distance != 0.0)
+            {
+                neighbor_indexes[found_initials] = init_index;
+                neighbor_distances[found_initials] = current_distance;
+                found_initials++;
+            }else{
+                k_ ++;
+            }
         }
         sort_descendent(neighbor_distances, neighbor_indexes, k);
         for (long other_obj_index = 0; other_obj_index < N_objs; other_obj_index++)
@@ -485,13 +518,16 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
             PyList_SetItem(tmp, 1, PyLong_FromLong(neighbor_indexes[k_]));
             PyList_SetItem(tmp, 2, PyFloat_FromDouble(neighbor_distances[k_]));
             PyList_Append(sparse_knn, tmp);
+            number_of_links++;
             if(obj_index == neighbor_indexes[k_]){
                 errprint("something went wrong\n");
                 exit(23974);
             }
         }
     }
+    printf("\n");
     infoprint("stupid_knn done.\n");
+    progress_bar_status = 0;
     return sparse_knn;
 }
 
@@ -547,6 +583,7 @@ static PyMethodDef cnetsMethods[] = {
     {"get_distortion", Py_get_distortion, METH_VARARGS, "Returns the distortion of the network"},
     {"set_target", set_target, METH_VARARGS,"sets the target sparse matrix"},
     {"set_seed", set_seed, METH_VARARGS, "Set the seed for random numbers"},
+    {"set_negative_sampling_fraction", set_negative_sampling_fraction, METH_VARARGS, "Set the fraction of random nodes used to perform negative sampling (0.0 < neg_samp_frac < 1.0)"},
     {"stupid_knn", stupid_knn, METH_VARARGS, "A stupid k-nearest neighbor graph generator."},
     {NULL, NULL, 0, NULL}//Guardian of The Table
 };

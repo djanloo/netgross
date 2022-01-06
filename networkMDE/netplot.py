@@ -15,6 +15,10 @@ scat_kwargs = {"cmap": "viridis", "s": 30, "alpha": 1}
 line_kwargs = {"color": "k", "alpha": 1, "lw": 0.4}
 plot_lines = True
 
+# This must be filled with the return 
+# mappable from set_array for colorbars
+mappable = None 
+
 def get_graphics(net):
     """Generates the figure, axis and empty scatterplot/lines for the net."""
 
@@ -79,7 +83,7 @@ def update_scatter(ax, net, colors, normalize_colors=True):
     ax.set_ylim((min_, max_))
 
     # colors
-    scat.set_array(np.array(list(colors)))
+    mappable = scat.set_array(np.array(list(colors)))
     if normalize_colors:
         vmin, vmax = min(colors), max(colors)
         scat.set_clim(vmin, vmax)
@@ -153,7 +157,7 @@ def animate_MDE(net, updates_per_frame, MDEkwargs, anim_kwargs):
     return supernet.net.animation
 
 
-def plot_net(net, labels=None):
+def plot_net(net, labels=None, colorbar=False):
     """Plots a statical image for the network embedding"""
     print("Plot started:")
     print("Getting graphics..", end="", flush=True)
@@ -192,6 +196,8 @@ def plot_net(net, labels=None):
         else:
             for node in net:
                 ax.annotate(labels[node.n], tuple(node.position), size=11)
+    if colorbar:
+        plt.colorbar(mappable=net.scatplot, ax=ax)
 
 
 def plot_links(net):

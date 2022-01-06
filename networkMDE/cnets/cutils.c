@@ -17,9 +17,9 @@ typedef struct sparserow
     float d;
 } SparseRow;
 
-void progress_bar(float progress, int length)
+void progress_bar(float progress, int length, int print_distortion)
 {     
-    if ((int) (length*(progress - progress_bar_status)) > 1)
+    if ((int) (length*(progress - progress_bar_status)) >= 1 || progress == 1.0)
     {   
         int i = 0;
         char * string = (char *) malloc( sizeof(char) * (length+1));
@@ -46,7 +46,7 @@ void progress_bar(float progress, int length)
         printf("%d %%", (int)(100*progress));
         //printf(GRN"\33[2K\r%s %d %%", string, (int)(100*progress));
         printf(YEL);
-        printf("(D = %.4lf)", get_distortion());
+        if (print_distortion){printf(" (D = %.4lf)", get_distortion());}
         printf(RESET_COLOR);
         fflush(stdout); 
         progress_bar_status = progress;
@@ -54,7 +54,9 @@ void progress_bar(float progress, int length)
 }
 
 SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links){
-
+    if (!PyList_CheckExact(list)){
+        errprint("the sparse matrix must be an instance of list.\n");
+    }
     SparseRow * SM = (SparseRow *) malloc(sizeof(SparseRow)*N_links);
     for (unsigned long k = 0; k < N_links;k++)
     {
@@ -72,7 +74,9 @@ SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links){
 }
 
 float * PyList_to_float(PyObject * Pylist, unsigned int N_elements){
-
+    if (!PyList_CheckExact(Pylist)){
+        errprint("conversions Py -> C of non-list type are not implemented yet.\n");
+    }
     float * dlist = (float *) malloc(sizeof(float)*N_elements);
     for (unsigned int i = 0; i < N_elements; i++)
     {
@@ -87,6 +91,11 @@ float euclidean_distance(float * pos1, float * pos2, unsigned int dim){
     for (unsigned int i = 0; i < dim; i++)
     {
         dist += pow(pos1[i] - pos2[i], 2);
+    }
+    if (isNan(dist)){
+        warnprint("euclidean distance turned out to be nan\n");
+        print_float_array(pos1, dim);printf("\n");
+        print_float_array(pos2, dim);printf("\n");
     }
     return sqrt(dist);
 }

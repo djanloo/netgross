@@ -253,6 +253,17 @@ class uniNetwork:
             ((self._targetM - self.distanceM) * self.linkM.astype(np.float64)) ** 2
         )/len(self.nodes)
 
+    @property 
+    def values(self):
+        return [node.value for node in self]
+    
+    @values.setter
+    def values(self, givens):
+        if len(givens) != self.N:
+            raise ValueError("one value must be given for each node")
+        for node, val in zip(self, givens):
+            node.value = val
+
     def cMDE(self, step=0.1, neg_step=0.001, Nsteps=1000):
         cnets.MDE(step, neg_step, Nsteps)
         positions = cnets.get_positions()

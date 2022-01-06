@@ -21,7 +21,7 @@
 typedef struct sparserow SparseRow;
 extern float progress_bar_status;
 
-void progress_bar(float progress, int length);
+void progress_bar(float progress, int length, int print_distortion);
 SparseRow * PyList_to_SM(PyObject * list, unsigned long N_links);
 float * PyList_to_float(PyObject * Pylist, unsigned int N_elements);
 float euclidean_distance(float * pos1, float * pos2, unsigned int dim);
