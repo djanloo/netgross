@@ -77,7 +77,12 @@ class netPlotDynamicTest(unittest.TestCase):
         animation = netplot.animate_super_network(
             self.super_net, self.super_net.update, frames=70, interval=60, blit=False
         )
-
+    def test_animate_MDE(self):
+        net = network.undNetwork.Random(20, 0.7)
+        animation = netplot.animate_MDE( net, 1, 
+                                        {"step":2.0, "neg_step": 1e-4, "Nsteps":20}, 
+                                        {"frames":100, "interval":60, "blit":False}
+                                        )
 
 if __name__ == "__main__":
     unittest.main()
