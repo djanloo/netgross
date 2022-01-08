@@ -298,7 +298,7 @@ class Network:
     def distortion(self):
         return np.sum(
             ((self._targetM - self.distanceM) * self.linkM.astype(np.float64)) ** 2
-        ) / len(self.nodes)
+        ) / len(self.nodes)/2
 
     @property
     def values(self):
