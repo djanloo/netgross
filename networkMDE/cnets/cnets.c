@@ -233,7 +233,7 @@ PyObject * MDE(PyObject * self, PyObject * args){
         errprint("parsing MDE args\n");
         Py_RETURN_NONE;
     }
-    infoprint("starting MDE with eps = %lf, neg_eps = %lf, Nsteps = %d\n",eps, neg_eps, number_of_steps);
+    infoprint("starting MDE with eps = %.3lf, neg_eps = %.3lf, Nsteps = %d\n",eps, neg_eps, number_of_steps);
     nancheck();
     float actual_distance = 0., factor;
     unsigned int child_index;
