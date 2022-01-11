@@ -318,6 +318,8 @@ class Network:
                     cnets.MDE(s, ns, N)
             else:
                 ValueError("invalid format for MDE parameters")
+        else:
+            cnets.MDE(step, neg_step, Nsteps)
         positions = cnets.get_positions()
         for node, position in zip(self, positions):
             node.position = np.array(position, dtype=np.float32)
