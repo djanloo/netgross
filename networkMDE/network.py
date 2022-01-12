@@ -312,6 +312,8 @@ class Network:
             node.value = val
 
     def cMDE(self, step=0.1, neg_step=0.001, Nsteps=1000):
+        if not self.is_cnet_initialized:
+            self.initialize_embedding()
         if hasattr(step, '__iter__') or hasattr(neg_step, '__iter__') or hasattr(Nsteps, '__iter__'):
             if len(step) == len(neg_step) and len(neg_step) == len(Nsteps):
                 for s, ns, N in zip(step, neg_step, Nsteps):
