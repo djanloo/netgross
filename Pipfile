@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+numpy = "==1.22.3"
+matplotlib = "==3.5.1"
+termcolor = "==1.1.0"
+tqdm = "==4.63.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

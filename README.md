@@ -25,8 +25,16 @@ The conceptual points of greater interest for me are:
 ![apple_fixed_distances](assets/random_big.gif)
 
 ## Installation
-Install running
+If you want to use a virtual environment, then (in the main folder) run
+```
+pipenv install
+```
+This ensures a deterministic build.
+
+If you prefer to install globally 
+
 ```
 pip install .
 ```
-in the same directory of ``setup.py``
+will do the job.
+
