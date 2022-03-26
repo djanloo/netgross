@@ -29,7 +29,7 @@ If you want to use a virtual environment, then (in the main folder) run
 ```
 pipenv install
 ```
-This ensures a deterministic build.
+This grants the build to be deterministic.
 
 If you prefer to install globally 
 
