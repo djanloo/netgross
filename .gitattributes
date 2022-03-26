@@ -1,0 +1,7 @@
+# This is the gitattribute file 
+# Added to better specify some stats, expecially for language statistics 
+
+
+# Since jupyter notebooks are used mainly for examples
+# jupyter notebook is excluded from language stats
+*.ipynb linguist-vendored
