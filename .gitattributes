@@ -3,5 +3,10 @@
 
 
 # Since jupyter notebooks are used mainly for examples
-# jupyter notebook is excluded from language stats
+# jupyter notebook is excluded from language stats:
 *.ipynb linguist-vendored
+
+
+# Also, since most of the information contained in C header files files
+# is redundant:
+*.h  linguist-vendored
