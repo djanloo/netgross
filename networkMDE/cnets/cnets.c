@@ -531,6 +531,27 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     return sparse_knn;
 }
 
+// TODO
+PyObject * ball_neighbours(PyObject * self, PyObject * args){
+    /* Given a set of points, cycles though them and collects, for each one,
+    all the points which distance is less than a given threshold.
+    */
+}
+
+// TODO 
+PyObject * variable_metric_ball_neighbours(PyObject * self, PyObject * args){
+    /* Using a variable metric generates a network in which each node has at least
+    one neighbour but the number of neighbours is not fixed.
+
+    To do so, first executes a first-nearest-neighbour.
+    The closest neighbour distance is the unit distance of the metric.
+
+    See UMAP algorithm.
+    */
+}
+
+
+
 void nancheck()
 {
     for (unsigned int d = 0; d < G.embedding_dimension; d++ )
