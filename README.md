@@ -1,7 +1,6 @@
-# networkMDE 
+# netgross
 
-[![CI](https://circleci.com/gh/djanloo/networkMDE.svg?style=svg)](https://app.circleci.com/pipelines/github/djanloo/networkMDE)
-[![codecov](https://codecov.io/gh/djanloo/networkMDE/branch/master/graph/badge.svg?token=0ET5A985A2)](https://codecov.io/gh/djanloo/networkMDE)
+[![CircleCI](https://circleci.com/gh/djanloo/netgross/tree/master.svg?style=svg)](https://circleci.com/gh/djanloo/netgross/tree/master)[![codecov](https://codecov.io/gh/djanloo/networkMDE/branch/master/graph/badge.svg?token=0ET5A985A2)](https://codecov.io/gh/djanloo/networkMDE)
 
 This repository aims to implement some **network embedding algorithms** (MDE, t-SNE, UMAP) for dimensionality reduction and other networks-related stuff (processes over networks, maybe also _leaky integrate-and-fire_ for SNN in future, assuming my dexterity is sufficient).
 
