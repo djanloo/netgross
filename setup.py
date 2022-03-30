@@ -12,13 +12,13 @@ extras = {
 }
 
 def main():
-    setup(name="networkMDE",
+    setup(name="netgross",
           version="1.0.0",
-          packages=["networkMDE"],
+          packages=["netgross"],
           description="Module for network computing",
           author="djanloo",
           author_email='becuzzigianluca@gmail.com',
-          ext_modules=[Extension("cnets", ["networkMDE/cnets/cnets.c", "networkMDE/cnets/cutils.c"])],
+          ext_modules=[Extension("cnets", ["netgross/cnets/cnets.c", "netgross/cnets/cutils.c"])],
           install_requires=dependencies,
           tests_require=test_deps,  # these two lines install stuff for
           extras_require=extras)    # test and coverage
