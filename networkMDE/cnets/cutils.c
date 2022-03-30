@@ -162,6 +162,7 @@ void print_int_array(int * array, int length){
 
 void insert_f(float * array, float value, int position, int length)
 {
+    /* Inserts an element in a float array by recursively shifting everything back */
     if (position >= length){
         errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
     }
@@ -174,6 +175,7 @@ void insert_f(float * array, float value, int position, int length)
 }
 void insert_i(int * array, int value, int position, int length)
 {
+    /* Inserts an element in a int array by recursively shifting everything back */
     if (position >= length){
         errprint("insert_f - positioning outside array (%d >= %d )\n", position, length);
     }

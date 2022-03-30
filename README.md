@@ -25,16 +25,18 @@ The conceptual points of greater interest for me are:
 ![apple_fixed_distances](assets/random_big.gif)
 
 ## Installation
-If you want to use a virtual environment, then (in the main folder) run
+I suggest to use a virtual environment running
 ```
 pipenv install
+pipenv shell
+pip install .
 ```
-This grants the build to be deterministic.
+in the main directory.
 
-If you prefer to install globally 
-
+To install globally:
 ```
 pip install .
 ```
-will do the job.
+
+Development installation (``pip install -e .``) is not provided yet.
 

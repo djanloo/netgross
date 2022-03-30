@@ -13,3 +13,4 @@ tqdm = "==4.63.1"
 
 [requires]
 python_version = "3.9"
+
