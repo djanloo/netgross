@@ -38,5 +38,3 @@ To install globally:
 pip install .
 ```
 
-Development installation (``pip install -e .``) is not provided yet.
-
