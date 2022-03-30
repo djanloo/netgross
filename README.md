@@ -25,7 +25,7 @@ The conceptual points of greater interest for me are:
 ![apple_fixed_distances](assets/random_big.gif)
 
 ## Installation
-I suggest to use a virtual environment running
+I suggest using a virtual environment running
 ```
 pipenv install
 pipenv shell
