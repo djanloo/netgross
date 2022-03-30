@@ -4,7 +4,6 @@ distorted way possible (MDE).
 author: djanloo
 date: 20 nov 21
 """
-from matplotlib.pyplot import connect
 from networkMDE import network
 import numpy as np
 

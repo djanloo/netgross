@@ -459,7 +459,7 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     float *obj_pos, *other_obj_pos;
     for (long obj_index = 0; obj_index < N_objs; obj_index++)
     {
-        // progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
+        progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
         obj_pos = PyList_to_float(PyList_GetItem(objects, obj_index) , obj_space_dim);
 
         // Initialization of neighbours array from node ordering:
@@ -541,11 +541,76 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     return sparse_knn;
 }
 
-// TODO
 PyObject * ball_neighbours(PyObject * self, PyObject * args){
     /* Given a set of points, cycles though them and collects, for each one,
     all the points which distance is less than a given threshold.
     */
+    nancheck();
+    PyObject * objects;
+    float ball_radius;
+    if (!PyArg_ParseTuple(args, "Of", &objects, &ball_radius)){
+       errprint("ball_neighbours - parsing failed\n");
+       Py_RETURN_NONE;
+    }
+    if (ball_radius <= 0.0){
+        errprint("ball_neighbours - radius cannot <= 0\n");
+        exit(70000);
+    }
+    if (!PyList_CheckExact(objects)){
+        errprint("ball_neighbours - the given list of objects is not a list (numpy array not supported yet).\n");
+        exit(5);
+    }
+    int N_objs = PyList_Size(objects);
+    unsigned int obj_space_dim = PyList_Size(PyList_GetItem(objects, 0));
+
+    infoprint("requested ball_neighbours with radius = %lf of %d objects in R%d\n",ball_radius,N_objs, obj_space_dim);
+
+    float *obj_pos, *other_obj_pos;
+    long * neighbours = (long *)malloc(sizeof(int));
+    float * distances = (float *)malloc(sizeof(float));
+    int neighbours_counter;
+    float dist;
+    PyObject * sparse_matrix = PyList_New(0);
+    for (long obj_index = 0; obj_index < N_objs; obj_index++)
+    {   
+        neighbours_counter=0;
+        obj_pos =  PyList_to_float(PyList_GetItem(objects, obj_index), obj_space_dim);
+        progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
+
+        for (long other_obj_index = 0; other_obj_index < N_objs; other_obj_index++)
+        {   
+            if (other_obj_index != obj_index)
+            {
+                other_obj_pos = PyList_to_float(PyList_GetItem(objects, other_obj_index), obj_space_dim);
+                dist = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
+                if ( dist <= ball_radius){
+                    neighbours_counter++;
+                    neighbours = (long *) realloc(neighbours, sizeof(long)*neighbours_counter);
+                    distances = (float *) realloc(distances, sizeof(float)*neighbours_counter);
+                    neighbours[neighbours_counter-1] = other_obj_index;
+                    distances[neighbours_counter-1] = dist;
+                }
+            }
+        }
+
+        PyObject * tmp;
+        for (int i = 0; i < neighbours_counter; i++)
+        {
+            tmp = PyList_New(3);
+            PyList_SetItem(tmp, 0, PyLong_FromLong(obj_index));
+            PyList_SetItem(tmp, 1, PyLong_FromLong(neighbours[i]));
+            PyList_SetItem(tmp, 2, PyFloat_FromDouble(distances[i]));
+            PyList_Append(sparse_matrix, tmp);
+            if(obj_index == neighbours[i]){
+                errprint("something went wrong\n");
+                exit(23974);
+            }
+        }
+    }
+    printf("\n");
+    infoprint("ball_neighbours done.\n");
+    progress_bar_status = 0;
+    return sparse_matrix;
 }
 
 // TODO 
@@ -553,14 +618,12 @@ PyObject * variable_metric_ball_neighbours(PyObject * self, PyObject * args){
     /* Using a variable metric generates a network in which each node has at least
     one neighbour but the number of neighbours is not fixed.
 
-    To do so, first executes a 2-nearest-neighbour.
+    To do so, first executes a 2-nearest-neighbours.
     The second closest neighbour distance is the unit distance of the metric.
 
     See UMAP algorithm.
     */
 }
-
-
 
 void nancheck()
 {
@@ -616,6 +679,8 @@ static PyMethodDef cnetsMethods[] = {
     {"set_seed", set_seed, METH_VARARGS, "Set the seed for random numbers"},
     {"set_negative_sampling_fraction", set_negative_sampling_fraction, METH_VARARGS, "Set the fraction of random nodes used to perform negative sampling (0.0 < neg_samp_frac < 1.0)"},
     {"stupid_knn", stupid_knn, METH_VARARGS, "A stupid k-nearest neighbor graph generator."},
+    {"ball_neighbours", ball_neighbours, METH_VARARGS, "Generates a neighbour network of the elements inside a n-dimensional sphere of given raidus"},
+
     {NULL, NULL, 0, NULL}//Guardian of The Table
 };
 
@@ -623,7 +688,7 @@ static PyMethodDef cnetsMethods[] = {
 static struct PyModuleDef cnetsmodule = {
     PyModuleDef_HEAD_INIT,
     "cnets",
-    "Module for fast network computing",
+    "Module for fast network computing (v1.0.2)",
     -1,
     cnetsMethods
 };
