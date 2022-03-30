@@ -445,7 +445,7 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     int N_objs = PyList_Size(objects);
     unsigned int obj_space_dim = PyList_Size(PyList_GetItem(objects, 0));
 
-    infoprint("requested knn with k = %d of %d objects in R%d (matteo)\n",k,N_objs, obj_space_dim);
+    infoprint("requested knn with k = %d of %d objects in R%d\n",k,N_objs, obj_space_dim);
     if (k > N_objs)
     {
         errprint("stupid_knn - k cannot be more than the total number of elements\n");
@@ -459,10 +459,10 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
     float *obj_pos, *other_obj_pos;
     for (long obj_index = 0; obj_index < N_objs; obj_index++)
     {
-        progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
+        // progress_bar(((float)obj_index)/( (float) N_objs) , PROGRESSS_BAR_LENGTH, 0);
         obj_pos = PyList_to_float(PyList_GetItem(objects, obj_index) , obj_space_dim);
 
-        // Initialization of neighbors array from node ordering:
+        // Initialization of neighbours array from node ordering:
         //  - for node n takes node n+1, n+2, etc. (the last node is connected to the first one)
         //  - if distance != 0 adds node to the list of plausible neighbours
         //  - if this is not, continues searching
@@ -493,10 +493,9 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
                 // so result should be
                 //      list post insertion = [6.0 5.0 2.0 1.0]
                 // so the new one must be inserted right behind the first value wrt the new one is smaller
-
                 other_obj_pos = PyList_to_float(PyList_GetItem(objects, other_obj_index), obj_space_dim);
                 current_distance = euclidean_distance(obj_pos, other_obj_pos, obj_space_dim);
-                
+
                 insertion_index = -1; // stands for "this value has not to be inserted at all"
                 for (k_ = 0; k_ < k; k_++)
                 {
@@ -506,7 +505,7 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
                     // 5.0                      5.0                     5.0
                     // 8.0 6.0 2.0 1.0      8.0 6.0 2.0 1.0     8.0 6.0 2.0 1.0
                     // no (index = -1)          no (index = 0)          yes (index = 1)
-                    if (current_distance > neighbor_distances[k_]) break;
+                    if (current_distance >= neighbor_distances[k_]) break;
                     else insertion_index = k_;
                 }
                 if (insertion_index > -1)
@@ -519,9 +518,6 @@ PyObject * stupid_knn(PyObject * self, PyObject * args)
                         insert_i(neighbor_indexes, (int) other_obj_index, insertion_index, k);
                     }
                 }
-                printf("\n");
-                infoprint("Node %d", obj_index);
-                print_float_array(neighbor_distances, k);
             }
         }
         // For each element of the found list creates a sparse entry

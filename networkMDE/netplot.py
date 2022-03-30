@@ -14,6 +14,7 @@ fig_kwargs = {"figsize": (5, 5)}
 scat_kwargs = {"cmap": "viridis", "s": 30, "alpha": 1}
 line_kwargs = {"color": "k", "alpha": 1, "lw": 0.4}
 plot_lines = True
+plot_points = True
 
 # This must be filled with the return
 # mappable from set_array for colorbars
@@ -181,9 +182,10 @@ def plot_net(net, labels=None, colorbar=False):
         0.2 + 0.8 * abs(a) for a in activations
     ]  # [0.2 + 0.8 * a for a in activations]
 
-    print("Updating scatter..", end="", flush=True)
-    update_scatter(ax, net, point_colors)
-    print("\tDone.")
+    if plot_points:
+        print("Updating scatter..", end="", flush=True)
+        update_scatter(ax, net, point_colors)
+        print("\tDone.")
 
     if plot_lines:
         print("Updating lines..", end="", flush=True)
