@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import hsv_to_rgb
 
-from networkMDE import network
+from netgross import network
 
 plt.rc("font", family="serif")
 

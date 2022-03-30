@@ -1,7 +1,7 @@
 from matplotlib.pyplot import colorbar
 import numpy as np
 import unittest
-from networkMDE import network, netplot
+from netgross import network, netplot
 import cnets
 
 

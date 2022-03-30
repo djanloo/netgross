@@ -4,7 +4,7 @@ distorted way possible (MDE).
 author: djanloo
 date: 20 nov 21
 """
-from networkMDE import network
+from netgross import network
 import numpy as np
 
 from termcolor import colored

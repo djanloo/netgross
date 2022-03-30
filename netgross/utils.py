@@ -1,6 +1,4 @@
 import numpy as np
-import warnings
-
 
 def compact_indexes(sparseM):
     # again: definitely not the most elegant way to do it

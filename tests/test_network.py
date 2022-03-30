@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
-from networkMDE.classiter import cdict, cset, clist
-from networkMDE.network import Node, undLink, undNetwork, dirLink, dirNetwork
+from netgross.classiter import cdict, cset, clist
+from netgross.network import Node, undLink, undNetwork, dirLink, dirNetwork
 
 class testUndLinks(unittest.TestCase):
     def setUp(self):

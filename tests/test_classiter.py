@@ -1,5 +1,5 @@
 import unittest
-from networkMDE.classiter import clist, cset, cdict
+from netgross.classiter import clist, cset, cdict
 
 
 class dummyClass:
