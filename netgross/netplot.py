@@ -169,7 +169,7 @@ def plot_net(net, labels=None, colorbar=False, plot_activations=True):
 
     point_colors = net.nodes.value
 
-    if plot_activation:
+    if plot_activations:
         activations = net.links.activation
         line_colors = np.array([])
         for a in activations:
@@ -185,7 +185,7 @@ def plot_net(net, labels=None, colorbar=False, plot_activations=True):
     else:
          line_colors = np.zeros(len(net.links))
          line_alpha = 0.8*np.ones(len(net.links))
-         
+
     if plot_points:
         print("Updating scatter..", end="", flush=True)
         update_scatter(ax, net, point_colors)
