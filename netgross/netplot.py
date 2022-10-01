@@ -160,27 +160,28 @@ def animate_MDE(net, updates_per_frame, MDEkwargs, anim_kwargs):
     return supernet.net.animation
 
 
-def plot_net(net, labels=None, colorbar=False):
+def plot_net(net, labels=None, colorbar=False, plot_activations=True):
     """Plots a statical image for the network embedding"""
     print("Plot started:")
     print("Getting graphics..", end="", flush=True)
     _, ax = get_graphics(net)
     print("\tDone.")
 
-    activations = net.links.activation
+    if plot_activations:
+        activations = net.links.activation
 
-    point_colors = net.nodes.value
-    line_colors = np.array([])
-    for a in activations:
-        if a > 0:
-            line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis=0)
-        else:
-            line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis=0)
+        point_colors = net.nodes.value
+        line_colors = np.array([])
+        for a in activations:
+            if a > 0:
+                line_colors = np.append(line_colors, hsv_to_rgb((0.0, 1.0, a)), axis=0)
+            else:
+                line_colors = np.append(line_colors, hsv_to_rgb((0.5, 1.0, -a)), axis=0)
 
-    line_colors = line_colors.reshape(-1, 3)
-    line_alpha = [
-        0.2 + 0.8 * abs(a) for a in activations
-    ]  # [0.2 + 0.8 * a for a in activations]
+        line_colors = line_colors.reshape(-1, 3)
+        line_alpha = [
+            0.2 + 0.8 * abs(a) for a in activations
+        ]  # [0.2 + 0.8 * a for a in activations]
 
     if plot_points:
         print("Updating scatter..", end="", flush=True)
